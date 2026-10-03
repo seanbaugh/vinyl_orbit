@@ -56,16 +56,22 @@ New config: `PREVIEW_COUNTRY` (default `US`) — Apple storefront used for searc
 
 ## 5. Matching
 
-**Normalise** (`normalize(s)`): lowercase → strip accents (NFD) → drop bracketed segments `(...)`/`[...]` → drop a trailing ` - …` suffix containing remaster/remix/live/version/edit/mono/stereo/mix → drop `feat./ft./featuring …` → `&`→`and` → remove non-alphanumerics → collapse spaces. Artist names additionally drop a leading `the `. Discogs `(n)` suffixes are already stripped upstream.
+**Normalise** — shared steps: lowercase → strip accents (NFD) → `&`→`and` → drop `feat./ft./featuring …` → remove non-alphanumerics → collapse spaces. Tokens exclude the stopwords `the, and, a, an, of`.
+- `normalizeAlbum(s)`: additionally drops *all* bracketed segments `(...)`/`[...]` and any trailing ` - …` suffix before the shared steps (album decorations such as "(Original Motion Picture Score)", "(Deluxe)").
+- `normalizeTrack(s)`: drops bracketed segments and ` - …` suffixes **only** when they contain a version word (`remaster`, `remastered`, `mono`, `stereo`, `version`, `edit`, `mix`, `single`, `bonus`, `live`, `from`, `demo`). "Four (Instrumental)" stays distinct from "Four".
+- `normalizeArtist(s)`: shared steps on the display artist string (Discogs `(n)` suffixes are already stripped upstream).
 
-**Similarity** (`similarity(a,b)`): Dice coefficient over the token sets of the normalised strings (1 if both normalise equal, 0 if either empty).
+**Similarity**
+- `dice(a,b)`: Dice coefficient over the token sets (1 if both empty-equal, 0 if exactly one empty).
+- `containment(a,b)`: |A∩B| / min(|A|,|B|).
+- Album/artist similarity `albumSim = 0.5·dice + 0.5·containment` (so "Star Wars" ⊂ "Star Wars: A New Hope" scores well); track similarity uses plain `dice`.
 
-**Album pick** — search `term = "<first artist> <title>"` (entity=album, limit 10). Score each candidate:
-`0.6·sim(title, collectionName) + 0.3·sim(artist, artistName) + 0.1·countScore`, where `countScore = 1 − min(1, |discogsTrackCount − trackCount| / max(discogsTrackCount, 1))` (track-type rows only). Year is a tiebreak only (closest `releaseDate` year to the Discogs year). Accept the best if score ≥ 0.6. For compilations/"Various" artists, artist weight is folded into title (title 0.9).
+**Album pick** — search `term = "<display artists> <title>"` (entity=album, limit 10). Score each candidate:
+`0.5·albumSim(title, collectionName) + 0.25·albumSim(artists, artistName) + 0.15·yearScore + 0.1·countScore`, where `yearScore = max(0, 1 − |Δyear|/10)` (0.5 when the Discogs year is unknown) and `countScore = 1 − min(1, |discogsTrackCount − trackCount| / max(discogsTrackCount, 1))` (track-type rows only). Accept the best if score ≥ 0.6. When the Discogs artist is "Various", the artist term is omitted from the search and its weight moves to title (0.75). Verified on fixtures: Star Wars (1977) → "Star Wars: A New Hope (Original Motion Picture Score)" (1977) beats "The Empire Strikes Back" (1980).
 
-**Track mapping** (album found): lookup songs; for each Discogs track row (type `track`, in order) pick the unused Apple song with the highest `sim(title, trackName)`; accept if ≥ 0.75; ties broken by smallest |ordinal difference| (Discogs track order vs Apple disc/track order). Each Apple song is used at most once.
+**Track mapping** (album found): lookup songs; for each Discogs track row (type `track`, in order) pick the unused Apple song with the highest `dice(normalizeTrack(title), normalizeTrack(trackName))`; accept if ≥ 0.75; ties broken by smallest |ordinal difference| (Discogs track order vs Apple disc/track order). Each Apple song is used at most once.
 
-**Fallback** (album not found, or tracks left unmatched): up to 5 unmatched tracks get `search?term="<artist> <track title>"&entity=song&limit=5`; accept the best result with `sim(title) ≥ 0.8` and `sim(artist) ≥ 0.5`; `source = 'search'`. If nothing matched at all → status `unmatched`.
+**Fallback** (album not found, or tracks left unmatched): up to 5 unmatched tracks get `search?term="<artist> <track title>"&entity=song&limit=5`; accept the best result with track `dice ≥ 0.8` and `albumSim(artists, artistName) ≥ 0.5`; `source = 'search'`. If nothing matched at all → status `unmatched`.
 
 **Request budget**: first match of a release ≤ 2 + 5 = 7 requests (typically 2). Results cached until reset/stale.
 

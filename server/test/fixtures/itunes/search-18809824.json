@@ -1,0 +1,10 @@
+
+
+
+{
+ "resultCount":1,
+ "results": [
+{"wrapperType":"collection", "collectionType":"Album", "artistId":64398046, "collectionId":1452354896, "amgArtistId":739069, "artistName":"Sara Bareilles", "collectionName":"Amidst the Chaos", "collectionCensoredName":"Amidst the Chaos", "artistViewUrl":"https://music.apple.com/us/artist/sara-bareilles/64398046?uo=4", "collectionViewUrl":"https://music.apple.com/us/album/amidst-the-chaos/1452354896?uo=4", "artworkUrl60":"https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/91/f0/95/91f09528-2155-6a1d-45c0-0208e8efe059/886447489642.jpg/60x60bb.jpg", "artworkUrl100":"https://is1-ssl.mzstatic.com/image/thumb/Music124/v4/91/f0/95/91f09528-2155-6a1d-45c0-0208e8efe059/886447489642.jpg/100x100bb.jpg", "collectionPrice":9.99, "collectionExplicitness":"notExplicit", "trackCount":12, "copyright":"℗ 2019 Epic Records, a division of Sony Music Entertainment", "country":"USA", "currency":"USD", "releaseDate":"2019-04-05T07:00:00Z", "primaryGenreName":"Pop"}]
+}
+
+
