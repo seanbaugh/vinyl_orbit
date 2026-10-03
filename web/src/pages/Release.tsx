@@ -88,10 +88,10 @@ export function Release() {
             </div>
             <TagEditor releaseId={r.id} tags={r.tags} />
             <div className="actions">
-              <button className="btn btn-primary" onClick={() => addPlay.mutate({}, { onSuccess: () => setToast('Logged a play') })}>
+              <button className="btn btn-primary" onClick={spinNow}><Disc3 /> Spin now</button>
+              <button className="btn" onClick={() => addPlay.mutate({}, { onSuccess: () => setToast('Logged a play') })}>
                 <PlayIcon /> Played it
               </button>
-              <button className="btn" onClick={spinNow}><Disc3 /> Spin now</button>
               <CrateMenu releaseId={r.id} inCrates={r.crates} />
               <a className="btn" href={r.discogsUrl} target="_blank" rel="noreferrer"><ExternalLink /> Discogs</a>
             </div>
@@ -124,7 +124,8 @@ export function Release() {
         </div>
       </div>
 
-      {lightbox !== null && <Lightbox images={r.images} startIdx={lightbox} alt={r.title} onClose={() => setLightbox(null)} />}
+      {lightbox !== null && <Lightbox images={r.images} startIdx={lightbox} alt={r.title} onClose={() => setLightbox(null)}
+        onSpin={() => { setLightbox(null); spinNow(); }} />}
       {toast && <div className="toast" role="status">{toast}</div>}
     </div>
   );
