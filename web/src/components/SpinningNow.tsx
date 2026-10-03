@@ -1,6 +1,7 @@
 import { Pause, Play, SkipBack, SkipForward, Square, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useRelease } from '../api/hooks';
+import { paintBackdrop } from '../lib/backdrop';
 import { formatFamily } from '../lib/formats';
 import { useNowSpinning } from '../lib/nowSpinning';
 import { usePlayer } from '../player/PlayerProvider';
@@ -45,6 +46,15 @@ export function useSpinSource(): SpinSource | null {
 }
 
 const IDLE_MS = 3000;
+
+/** Soft, darkened cover filling the screen; pre-blurred once into a tiny canvas (see paintBackdrop). */
+function Backdrop({ src }: { src: string }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    if (ref.current) paintBackdrop(ref.current, src).catch(() => {});
+  }, [src]);
+  return <canvas ref={ref} className="spinning-now-bg" aria-hidden="true" />;
+}
 
 /** Full-screen, TV-friendly view: big cover beside a spinning record or CD. Mirror the Mac to an Apple TV to show it. */
 export function SpinningNow({ onClose }: { onClose: () => void }) {
@@ -117,7 +127,7 @@ function Overlay({ src, onClose }: { src: SpinSource; onClose: () => void }) {
 
   return (
     <div ref={rootRef} tabIndex={-1} className={`spinning-now${idle ? ' idle' : ''}`} role="dialog" aria-label="Spinning now">
-      {src.coverUrl && <div className="spinning-now-bg" style={{ backgroundImage: `url(${JSON.stringify(src.coverUrl)})` }} aria-hidden="true" />}
+      {src.coverUrl && <Backdrop src={src.coverUrl} />}
       <div className="spinning-now-label">Now spinning</div>
       <div className="spinning-now-stage">
         <CoverDisc coverUrl={src.coverUrl} alt={src.album ?? src.headline} spinning={src.spinning} kind={src.discKind} />

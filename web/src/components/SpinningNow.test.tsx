@@ -42,6 +42,7 @@ function setup(onClose = vi.fn()) {
 
 afterEach(cleanup);
 beforeEach(() => {
+  HTMLCanvasElement.prototype.getContext = (() => null) as typeof HTMLCanvasElement.prototype.getContext; // jsdom has no canvas
   localStorage.clear();
   useReleaseMock.mockReset();
   useReleaseMock.mockReturnValue({ data: undefined });
@@ -274,4 +275,12 @@ test('art sits left of the album info', async () => {
   const stage = view.container.querySelector('.spinning-now-stage')!;
   const info = view.container.querySelector('.spinning-now-meta')!;
   expect(stage.compareDocumentPosition(info) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+});
+
+test('the backdrop is a pre-blurred canvas when there is a cover, and absent without one', async () => {
+  const { h, view } = setup();
+  await act(async () => h.player.play([item(1)], 0));
+  expect(view.container.querySelector('canvas.spinning-now-bg')).toBeTruthy();
+  await act(async () => h.player.play([item(1, { coverUrl: null })], 0));
+  expect(view.container.querySelector('.spinning-now-bg')).toBeNull();
 });

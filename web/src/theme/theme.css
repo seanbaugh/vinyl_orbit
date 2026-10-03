@@ -539,12 +539,8 @@ table.data td.clip { max-width: 260px; overflow: hidden; text-overflow: ellipsis
   position: fixed; inset: 0; z-index: 200; display: flex; flex-direction: row; align-items: center; justify-content: center;
   gap: 3vw; padding: 0 4vw 0 7vw; background: #0b0b0b; color: #fff; overflow: hidden;
 }
-/* Blur a small copy and let the compositor scale it up (25% x 4.8 = 120% of the screen, centred with a 10% bleed).
-   One giant blur filter gets rasterised in tiles by WebKit and shows hard-edged bands that shift on repaint. */
-.spinning-now-bg {
-  position: absolute; left: -10%; top: -10%; width: 25%; height: 25%; background-size: cover; background-position: center;
-  filter: blur(14px) saturate(1.3) brightness(0.65); transform: scale(4.8); transform-origin: 0 0; will-change: transform;
-}
+/* No CSS filter here: the blur is baked into a 64px canvas (lib/backdrop.ts) that the browser just stretches. */
+.spinning-now-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scale(1.08); }
 .spinning-now::after { content: ''; position: absolute; inset: 0; background: linear-gradient(transparent 50%, rgba(0, 0, 0, 0.45)); pointer-events: none; }
 .spinning-now-label {
   position: absolute; z-index: 1; top: 4.5vh; left: 0; right: 0; display: flex; align-items: center; justify-content: center; gap: 1.4vw;
