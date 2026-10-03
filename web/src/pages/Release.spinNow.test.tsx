@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, render } from '@testing-library/react';
+import { act, cleanup, render, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { NowSpinningProvider, useNowSpinning } from '../lib/nowSpinning';
@@ -7,13 +7,14 @@ import { PlayerProvider, usePlayer } from '../player/PlayerProvider';
 import { Release } from './Release';
 
 const mutate = vi.hoisted(() => vi.fn());
+const images = vi.hoisted(() => ({ list: [] as unknown[] }));
 vi.mock('../components/TagEditor', () => ({ TagEditor: () => null }));
 vi.mock('../components/CrateMenu', () => ({ CrateMenu: () => null }));
 vi.mock('../api/hooks', () => ({
   useRelease: () => ({
     data: {
       id: 1, title: 'Rel', artists: 'Art', coverUrl: null, formatSummary: 'LP', year: null, country: null, copies: 1,
-      removed: false, labels: [], genres: [], styles: [], tags: [], crates: [], images: [], sides: [], plays: [],
+      removed: false, labels: [], genres: [], styles: [], tags: [], crates: [], images: images.list, sides: [], plays: [],
       lowestPrice: null, numForSale: null, communityRating: null, communityVotes: null, have: null, want: null,
       playCount: 0, lastPlayedAt: null, detailSyncedAt: null, discogsUrl: '#',
     },
@@ -49,6 +50,7 @@ const spin = (view: ReturnType<typeof setup>['view']) => act(() => { view.getByR
 afterEach(cleanup);
 beforeEach(() => {
   localStorage.clear();
+  images.list = [];
   mutate.mockReset();
   mutate.mockImplementation((_body: unknown, opts?: { onSuccess?: () => void }) => opts?.onSuccess?.());
 });
@@ -75,4 +77,25 @@ test('stops a preview from another record', async () => {
   expect(h.player.state.status).not.toBe('idle');
   spin(view);
   expect(h.player.state.status).toBe('idle');
+});
+
+test('Spin now is the first, primary action; Played it is secondary', () => {
+  const { view } = setup();
+  const buttons = [...view.container.querySelectorAll('.actions > button')];
+  expect(buttons[0].textContent).toContain('Spin now');
+  expect(buttons[0].classList.contains('btn-primary')).toBe(true);
+  const played = buttons.find((b) => b.textContent?.includes('Played it'))!;
+  expect(played.classList.contains('btn-primary')).toBe(false);
+});
+
+test('Spin now in the cover popup marks the record, opens the overlay and closes the popup', () => {
+  images.list = [{ idx: 0, url: '/a.jpg', width: 1, height: 1 }];
+  const { h, view } = setup();
+  act(() => { (view.container.querySelector('.cover-disc-sleeve') as HTMLElement).click(); });
+  const popup = view.getByRole('dialog', { name: 'Images' });
+  act(() => { within(popup).getByRole('button', { name: /Spin now/ }).click(); });
+  expect(h.ns.releaseId).toBe(1);
+  expect(h.ns.open).toBe(true);
+  expect(mutate).toHaveBeenCalledTimes(1);
+  expect(view.queryByRole('dialog', { name: 'Images' })).toBeNull();
 });

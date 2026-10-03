@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Disc3, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface Props {
@@ -6,9 +6,11 @@ interface Props {
   startIdx: number;
   alt: string;
   onClose: () => void;
+  /** When given, shows a Spin now button in the bar. */
+  onSpin?: () => void;
 }
 
-export function Lightbox({ images, startIdx, alt, onClose }: Props) {
+export function Lightbox({ images, startIdx, alt, onClose, onSpin }: Props) {
   const [i, setI] = useState(Math.max(0, images.findIndex((img) => img.idx === startIdx)));
   const n = images.length;
   const go = (d: number) => setI((cur) => (cur + d + n) % n);
@@ -32,6 +34,7 @@ export function Lightbox({ images, startIdx, alt, onClose }: Props) {
     <div className="overlay" role="dialog" aria-modal="true" aria-label="Images">
       <div className="lightbox-bar">
         <span className="grow">{i + 1} / {n}</span>
+        {onSpin && <button className="btn btn-primary" onClick={onSpin}><Disc3 /> Spin now</button>}
         <button className="icon-btn" onClick={onClose} aria-label="Close"><X /></button>
       </div>
       <div className="lightbox-stage" onClick={(e) => e.target === e.currentTarget && onClose()}>
