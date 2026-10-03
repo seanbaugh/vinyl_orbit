@@ -1,37 +1,11 @@
-import type { Facet, ReleaseListItem } from '../api-types.js';
+import type { Dashboard, Facet, SearchResults, Stats } from '../api-types.js';
+
+export type { Dashboard, SearchResults, Stats };
 import type { Db } from '../db/index.js';
 import { getFacets, likePattern, queryList } from './releases.js';
 
 const SHELF = 20;
 const ACTIVE = 'r.removed_at IS NULL';
-
-export interface Dashboard {
-  stats: { records: number; estimatedValue: number; valuedCount: number; playsThisMonth: number; topGenre: string | null };
-  recentlyAdded: ReleaseListItem[];
-  pullSomething: ReleaseListItem[];
-  recentlyPlayed: ReleaseListItem[];
-  notPlayedInAWhile: ReleaseListItem[];
-}
-
-export interface Stats {
-  byGenre: Facet[];
-  byStyle: Facet[];
-  byDecade: Facet[];
-  byFormat: Facet[];
-  byLabel: Facet[];
-  mostPlayed: ReleaseListItem[];
-  valueByGenre: { value: string; total: number }[];
-  totalValue: number;
-  playsByMonth: { month: string; count: number }[];
-}
-
-export interface SearchResults {
-  releases: ReleaseListItem[];
-  artists: Facet[];
-  labels: Facet[];
-  tracks: { releaseId: number; title: string; position: string; releaseTitle: string }[];
-  notes: { releaseId: number; snippet: string; releaseTitle: string }[];
-}
 
 function value(db: Db) {
   return db.prepare(`SELECT coalesce(sum(lowest_price), 0) AS total, count(lowest_price) AS n

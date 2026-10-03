@@ -1,5 +1,6 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import type { SyncProgress, SyncResult } from '../api-types.js';
 import type { Config } from '../config.js';
 import type { Db } from '../db/index.js';
 import type { DiscogsClient } from '../discogs/client.js';
@@ -7,20 +8,7 @@ import {
   applyDetail, imagesMissingLocal, markRemoved, releasesNeedingDetail, setImageLocalPath, upsertBasic,
 } from '../repo/releases.js';
 
-export interface SyncProgress {
-  phase: 'idle' | 'collection' | 'details' | 'images' | 'done' | 'error';
-  done: number;
-  total: number;
-  message?: string;
-}
-
-export interface SyncResult {
-  added: number;
-  removed: number;
-  detailed: number;
-  imagesSaved: number;
-  errors: string[];
-}
+export type { SyncProgress, SyncResult };
 
 export interface SyncDeps {
   db: Db;

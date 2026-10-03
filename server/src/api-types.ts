@@ -112,3 +112,54 @@ export interface Facets {
   crates: Crate[];
   total: number;
 }
+
+export interface Dashboard {
+  stats: { records: number; estimatedValue: number; valuedCount: number; playsThisMonth: number; topGenre: string | null };
+  recentlyAdded: ReleaseListItem[];
+  pullSomething: ReleaseListItem[];
+  recentlyPlayed: ReleaseListItem[];
+  notPlayedInAWhile: ReleaseListItem[];
+}
+
+export interface Stats {
+  byGenre: Facet[];
+  byStyle: Facet[];
+  byDecade: Facet[];
+  byFormat: Facet[];
+  byLabel: Facet[];
+  mostPlayed: ReleaseListItem[];
+  valueByGenre: { value: string; total: number }[];
+  totalValue: number;
+  playsByMonth: { month: string; count: number }[];
+}
+
+export interface SearchResults {
+  releases: ReleaseListItem[];
+  artists: Facet[];
+  labels: Facet[];
+  tracks: { releaseId: number; title: string; position: string; releaseTitle: string }[];
+  notes: { releaseId: number; snippet: string; releaseTitle: string }[];
+}
+
+export interface SyncProgress {
+  phase: 'idle' | 'collection' | 'details' | 'images' | 'done' | 'error';
+  done: number;
+  total: number;
+  message?: string;
+}
+
+export interface SyncResult {
+  added: number;
+  removed: number;
+  detailed: number;
+  imagesSaved: number;
+  errors: string[];
+}
+
+export interface SyncStatus {
+  running: boolean;
+  progress: SyncProgress;
+  lastCompletedAt: string | null;
+  lastError: string | null;
+  lastResult: SyncResult | null;
+}

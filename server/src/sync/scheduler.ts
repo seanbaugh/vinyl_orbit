@@ -1,13 +1,7 @@
 import type { Db } from '../db/index.js';
-import type { SyncProgress, SyncResult } from './sync.js';
+import type { SyncProgress, SyncResult, SyncStatus } from '../api-types.js';
 
-export interface SyncStatus {
-  running: boolean;
-  progress: SyncProgress;
-  lastCompletedAt: string | null;
-  lastError: string | null;
-  lastResult: SyncResult | null;
-}
+export type { SyncStatus };
 
 export type SyncRunner = (full: boolean, onProgress: (p: SyncProgress) => void) => Promise<SyncResult>;
 
