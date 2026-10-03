@@ -1,11 +1,12 @@
 /* ------------------------------------------------------------------ tokens */
 :root {
-  --bg: #0f1514;
-  --surface: #151d1c;
-  --surface-2: #1b2524;
-  --surface-3: #222e2c;
-  --border: #26322f;
-  --border-strong: #34433f;
+  /* Dark surfaces carry a faint wash of the chosen accent (light theme overrides these below). */
+  --bg: color-mix(in srgb, var(--accent) 6%, #0c0f0f);
+  --surface: color-mix(in srgb, var(--accent) 4%, #141a19);
+  --surface-2: color-mix(in srgb, var(--accent) 4%, #1a2221);
+  --surface-3: color-mix(in srgb, var(--accent) 4%, #212b29);
+  --border: color-mix(in srgb, var(--accent) 6%, #252f2d);
+  --border-strong: color-mix(in srgb, var(--accent) 6%, #33403d);
   --text: #e6ecea;
   --muted: #8a9a96;
   --faint: #5e6d69;
@@ -18,8 +19,9 @@
   --groove: rgba(255, 255, 255, 0.035);
   --sidebar-w: 248px;
   --font: 'Inter', system-ui, -apple-system, sans-serif;
-  --groove-line: rgba(255, 255, 255, 0.06);
-  --groove-sheen: rgba(255, 255, 255, 0.06);
+  --groove-line: color-mix(in srgb, var(--accent) 16%, transparent);
+  --groove-sheen: color-mix(in srgb, var(--accent) 10%, transparent);
+  --groove-label: color-mix(in srgb, var(--accent) 12%, transparent);
   color-scheme: dark;
 }
 
@@ -38,6 +40,7 @@
   --groove: rgba(0, 0, 0, 0.035);
   --groove-line: rgba(0, 0, 0, 0.06);
   --groove-sheen: rgba(0, 0, 0, 0.04);
+  --groove-label: color-mix(in srgb, var(--accent) 7%, transparent);
   color-scheme: light;
 }
 
@@ -446,7 +449,7 @@ table.data td.clip { max-width: 260px; overflow: hidden; text-overflow: ellipsis
   animation: vo-spin 180s linear infinite;
 }
 .vinyl-backdrop-disc svg { display: block; }
-.vinyl-backdrop-label { fill: color-mix(in srgb, var(--accent) 7%, transparent); }
+.vinyl-backdrop-label { fill: var(--groove-label); }
 .vinyl-backdrop-sheen {
   position: absolute; inset: 0; border-radius: 50%;
   background: conic-gradient(from 0deg, transparent 0deg 40deg, var(--groove-sheen) 55deg, transparent 70deg 220deg,
