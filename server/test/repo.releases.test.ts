@@ -113,3 +113,13 @@ test('getFacets counts non-removed releases', () => {
   markRemoved(db, [7455230], NOW);
   expect(getFacets(db).total).toBe(1);
 });
+
+test('title sort ignores leading articles, matching the A–Z rail', () => {
+  const fresh = openDb(':memory:');
+  const base = items[0];
+  const withTitle = (id: number, title: string) =>
+    ({ ...base, id, basic_information: { ...base.basic_information, id, title } });
+  upsertBasic(fresh, [withTitle(1, 'The Wall'), withTitle(2, 'Abbey Road'), withTitle(3, 'A Night at the Opera'), withTitle(4, 'Zenyatta')], NOW);
+  expect(listReleases(fresh, { sort: 'title' }).map((r) => r.title))
+    .toEqual(['Abbey Road', 'A Night at the Opera', 'The Wall', 'Zenyatta']);
+});

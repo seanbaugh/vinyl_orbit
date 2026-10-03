@@ -361,3 +361,4 @@ table.data .num { text-align: right; font-variant-numeric: tabular-nums; }
 @media (max-width: 900px) {
   .topbar .spacer { display: none; }
 }
+table.data td.clip { max-width: 260px; overflow: hidden; text-overflow: ellipsis; }

@@ -176,9 +176,14 @@ const LIST_SELECT = `
 const ARTIST_SORT = `(CASE WHEN lower(r.artists_display) LIKE 'the %' THEN substr(r.artists_display, 5)
                      ELSE r.artists_display END) COLLATE NOCASE`;
 
+const TITLE_SORT = `(CASE WHEN lower(r.title) LIKE 'the %' THEN substr(r.title, 5)
+                    WHEN lower(r.title) LIKE 'an %' THEN substr(r.title, 4)
+                    WHEN lower(r.title) LIKE 'a %' THEN substr(r.title, 3)
+                    ELSE r.title END) COLLATE NOCASE`;
+
 const SORTS: Record<SortKey, { expr: string; nullable: boolean }> = {
   artist: { expr: ARTIST_SORT, nullable: false },
-  title: { expr: 'r.title COLLATE NOCASE', nullable: false },
+  title: { expr: TITLE_SORT, nullable: false },
   year: { expr: 'r.year', nullable: true },
   added: { expr: 'r.date_added', nullable: false },
   played: { expr: 'last_played_at', nullable: true },
