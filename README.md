@@ -4,6 +4,8 @@ A self-hosted browser for your public Discogs collection: a cover-grid library w
 
 Everything runs in one Docker container: a Node/Fastify server that syncs from the Discogs API into SQLite and serves a React app on port **3020**.
 
+Vinyl Orbit is based on the amazing work of [neonsolstice](https://github.com/neonsolstice) and the [BookOrbit](https://github.com/bookorbit/bookorbit) app.
+
 ![Vinyl Orbit library](docs/screenshots/library.jpg)
 
 ## Screenshots
@@ -151,3 +153,7 @@ npm run build      # production build; then: DATA_DIR=./data node server/dist/ma
 ```
 
 Layout: `server/` (Fastify, better-sqlite3, sync engine, JSON API under `/api`), `web/` (React, Vite, TanStack Query), shared response types in `server/src/api-types.ts`.
+
+## Credits
+
+This app is based on the amazing work of [neonsolstice](https://github.com/neonsolstice) and the [BookOrbit](https://github.com/bookorbit/bookorbit) app. Vinyl Orbit takes BookOrbit's look and layout and adapts them for a Discogs record collection.
