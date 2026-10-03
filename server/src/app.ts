@@ -3,8 +3,10 @@ import Fastify, { LogController, type FastifyInstance } from 'fastify';
 import { existsSync, mkdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import type { Db } from './db/index.js';
+import type { PreviewService } from './previews/service.js';
 import { HttpError } from './routes/common.js';
 import { insightRoutes } from './routes/insights.js';
+import { previewRoutes } from './routes/previews.js';
 import { releaseRoutes } from './routes/releases.js';
 import { syncRoutes } from './routes/sync.js';
 import { userRoutes } from './routes/user.js';
@@ -13,6 +15,7 @@ import type { Scheduler } from './sync/scheduler.js';
 export interface AppDeps {
   db: Db;
   scheduler: Scheduler;
+  previews: PreviewService;
   dataDir: string;
   webDist?: string;
   logger?: boolean;
@@ -26,8 +29,9 @@ export function buildApp(deps: AppDeps): FastifyInstance {
 
   app.setErrorHandler((err: Error & { statusCode?: number }, req, reply) => {
     const status = err instanceof HttpError ? err.statusCode : err.statusCode ?? 500;
-    if (status >= 500) req.log.error(err);
-    reply.code(status).send({ error: status >= 500 ? 'Internal error' : err.message });
+    const intentional = err instanceof HttpError;
+    if (status >= 500 && !intentional) req.log.error(err);
+    reply.code(status).send({ error: intentional || status < 500 ? err.message : 'Internal error' });
   });
 
   app.get('/api/health', async () => ({ ok: true }));
@@ -35,6 +39,7 @@ export function buildApp(deps: AppDeps): FastifyInstance {
   userRoutes(app, deps);
   insightRoutes(app, deps);
   syncRoutes(app, deps);
+  previewRoutes(app, deps);
 
   const imagesDir = resolve(deps.dataDir, 'images');
   mkdirSync(imagesDir, { recursive: true });

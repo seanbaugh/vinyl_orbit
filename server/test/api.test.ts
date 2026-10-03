@@ -7,11 +7,16 @@ import { buildApp } from '../src/app.js';
 import { openDb, type Db } from '../src/db/index.js';
 import { applyDetail, upsertBasic } from '../src/repo/releases.js';
 import type { Scheduler, SyncStatus } from '../src/sync/scheduler.js';
+import { PreviewUnavailableError, type PreviewService } from '../src/previews/service.js';
+import type { PreviewInfo } from '../src/api-types.js';
 import { collection, release, RELEASE_IDS } from './helpers.js';
 
 let db: Db;
 let app: FastifyInstance;
 let triggered: boolean[];
+let previewCalls: string[];
+let previewMode: 'ok' | 'missing' | 'down';
+const info: PreviewInfo = { status: 'auto', album: null, tracks: {}, matchedAt: 'x' };
 
 const status: SyncStatus = {
   running: false, progress: { phase: 'idle', done: 0, total: 0 }, lastCompletedAt: null, lastError: null, lastResult: null,
@@ -27,7 +32,21 @@ beforeEach(async () => {
     start() {}, stop() {}, status: () => status,
     trigger: (full) => { triggered.push(full); return { ...status, running: true }; },
   };
-  app = buildApp({ db, scheduler, dataDir: mkdtempSync(join(tmpdir(), 'vo-api-')) });
+  previewCalls = [];
+  previewMode = 'ok';
+  const respond = async (call: string) => {
+    previewCalls.push(call);
+    if (previewMode === 'down') throw new PreviewUnavailableError(new Error('x'));
+    return previewMode === 'missing' ? null : info;
+  };
+  const previews: PreviewService = {
+    get: (id) => respond(`get ${id}`),
+    candidates: async (id) => { previewCalls.push(`candidates ${id}`); return [] as never; },
+    setAlbum: (id, album) => respond(`setAlbum ${id} ${album}`),
+    setNone: (id) => respond(`setNone ${id}`),
+    reset: (id) => respond(`reset ${id}`),
+  };
+  app = buildApp({ db, scheduler, previews, dataDir: mkdtempSync(join(tmpdir(), 'vo-api-')) });
   await app.ready();
 });
 
@@ -129,4 +148,21 @@ test('sync trigger and status', async () => {
 test('final: play timestamps with offsets are normalised to UTC', async () => {
   const play = await send('POST', '/api/releases/7455230/plays', { playedAt: '2026-09-30T23:30:00-04:00' });
   expect(play.body.playedAt).toBe('2026-10-01T03:30:00.000Z');
+});
+
+test('preview routes', async () => {
+  expect(await get('/api/releases/7455230/previews')).toEqual({ status: 200, body: info });
+  expect((await get('/api/releases/7455230/previews/candidates')).body).toEqual([]);
+  expect((await send('PUT', '/api/releases/7455230/previews', { appleAlbumId: 5 })).status).toBe(200);
+  expect((await send('PUT', '/api/releases/7455230/previews', { none: true })).status).toBe(200);
+  expect((await send('PUT', '/api/releases/7455230/previews', {})).status).toBe(400);
+  expect((await send('DELETE', '/api/releases/7455230/previews')).status).toBe(200);
+  expect(previewCalls).toEqual(['get 7455230', 'candidates 7455230', 'setAlbum 7455230 5', 'setNone 7455230', 'reset 7455230']);
+});
+
+test('preview routes: 404 and 502', async () => {
+  previewMode = 'missing';
+  expect((await get('/api/releases/1/previews')).status).toBe(404);
+  previewMode = 'down';
+  expect(await get('/api/releases/7455230/previews')).toEqual({ status: 502, body: { error: "Couldn't reach Apple Music. Try again." } });
 });

@@ -4,6 +4,8 @@ import { buildApp } from './app.js';
 import { loadConfig } from './config.js';
 import { openDb } from './db/index.js';
 import { createDiscogsClient } from './discogs/client.js';
+import { createItunesClient } from './previews/itunes.js';
+import { createPreviewService } from './previews/service.js';
 import { createScheduler } from './sync/scheduler.js';
 import { runSync } from './sync/sync.js';
 
@@ -23,7 +25,8 @@ const scheduler = createScheduler(
 
 // server/dist/main.js (or server/src/main.ts in dev) → <repo>/web/dist
 const webDist = resolve(fileURLToPath(import.meta.url), '../../../web/dist');
-const app = buildApp({ db, scheduler, dataDir: config.dataDir, webDist, logger: true });
+const previews = createPreviewService({ db, itunes: createItunesClient({ country: config.previewCountry }) });
+const app = buildApp({ db, scheduler, previews, dataDir: config.dataDir, webDist, logger: true });
 
 await app.listen({ host: '0.0.0.0', port: config.port });
 app.log.info(`Vinyl Orbit syncing Discogs user "${config.username}" every ${config.syncIntervalHours}h`);
