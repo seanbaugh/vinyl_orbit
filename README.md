@@ -134,6 +134,12 @@ New records are always fetched in full on the next sync. **Sync now** in the sid
 - Your notes, tags, crates and plays are never touched by a sync.
 - If you remove a record from your Discogs collection it's hidden, not deleted — add it back and its notes and plays reappear.
 
+## Show it on your TV (AirPlay)
+
+- On your Mac open Control Center → **Screen Mirroring** and pick your Apple TV.
+- Open a record and press **Spin now** (it also logs a play), or play a preview and press **Spinning now** (⌘⇧S) in the top bar or mini-player.
+- The TV shows the cover large beside a spinning record, or a silver CD for CDs. Controls fade out after a few seconds; **Esc** leaves.
+
 ## How track previews work
 
 - The first time you open a record's Tracks tab, Vinyl Orbit looks it up on Apple Music (free iTunes Search API, no account needed), picks the closest album, and matches each track by title. Tracks it can't place get a per-track search. The result is saved, so later visits are instant.

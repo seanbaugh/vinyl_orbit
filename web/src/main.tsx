@@ -3,6 +3,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { App } from './App';
+import { NowSpinningProvider } from './lib/nowSpinning';
 import { PlayerProvider } from './player/PlayerProvider';
 import { ThemeProvider } from './theme/ThemeProvider';
 import './theme/theme.css';
@@ -21,9 +22,11 @@ createRoot(document.getElementById('root')!).render(
             .then(() => queryClient.invalidateQueries({ queryKey: ['previews', item.releaseId] }))
             .catch(() => {});
         }}>
-          <BrowserRouter>
-            <App />
-          </BrowserRouter>
+          <NowSpinningProvider>
+            <BrowserRouter>
+              <App />
+            </BrowserRouter>
+          </NowSpinningProvider>
         </PlayerProvider>
       </ThemeProvider>
     </QueryClientProvider>

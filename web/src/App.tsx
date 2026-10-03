@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import { CommandPalette } from './components/CommandPalette';
 import { MiniPlayer } from './components/MiniPlayer';
+import { SpinningNow } from './components/SpinningNow';
+import { useSpinningNowShortcut } from './components/SpinningNowButton';
+import { useNowSpinning } from './lib/nowSpinning';
 import { usePlayer } from './player/PlayerProvider';
 import { Sidebar } from './components/Sidebar';
 import { TopBar } from './components/TopBar';
@@ -20,6 +23,8 @@ export function App() {
   const location = useLocation();
   const contentRef = useRef<HTMLDivElement>(null);
   const player = usePlayer();
+  const spin = useNowSpinning();
+  useSpinningNowShortcut();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -56,6 +61,7 @@ export function App() {
         </div>
       </div>
       <MiniPlayer />
+      {spin.open && <SpinningNow onClose={() => spin.setOpen(false)} />}
       {paletteOpen && <CommandPalette onClose={() => setPaletteOpen(false)} />}
     </div>
   );

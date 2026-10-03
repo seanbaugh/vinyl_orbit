@@ -1,6 +1,6 @@
 import DOMPurify from 'dompurify';
 import { marked } from 'marked';
-import { ExternalLink, Play as PlayIcon, Star, Trash2 } from 'lucide-react';
+import { Disc3, ExternalLink, Play as PlayIcon, Star, Trash2 } from 'lucide-react';
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { Line, LineChart, ResponsiveContainer, Tooltip, YAxis } from 'recharts';
@@ -15,6 +15,8 @@ import { Lightbox } from '../components/Lightbox';
 import { TagEditor } from '../components/TagEditor';
 import { createAutosaver } from '../lib/autosave';
 import { formatClass, formatFamily } from '../lib/formats';
+import { useNowSpinning } from '../lib/nowSpinning';
+import { markSpinLogged, shouldLogSpin } from '../lib/spinLog';
 import { fmtDate, fmtInt, fmtMoney, fmtRelative, fmtSeconds, localToday } from '../lib/format';
 
 const TABS = ['tracks', 'notes', 'history', 'details'] as const;
@@ -29,6 +31,7 @@ export function Release() {
   const [toast, setToast] = useState<string | null>(null);
   const addPlay = useAddPlay(id);
   const player = usePlayer();
+  const nowSpinning = useNowSpinning();
 
   useEffect(() => {
     if (!toast) return;
@@ -39,6 +42,18 @@ export function Release() {
   if (isLoading) return <div className="empty">Loading…</div>;
   if (error || !r) return <div className="empty">{error ? (error as Error).message : 'Record not found.'}</div>;
 
+  // A record on the turntable: show it full-screen, and log the play once per 10 minutes.
+  const spinNow = () => {
+    player.stop(); // a preview from another record would otherwise take over the TV
+    nowSpinning.set(r.id);
+    if (shouldLogSpin(r.id)) {
+      addPlay.mutate({}, { onSuccess: () => { markSpinLogged(r.id); setToast('Logged a play'); } });
+    } else {
+      setToast('Spinning (play already logged)');
+    }
+    nowSpinning.setOpen(true);
+  };
+
   const label = r.labels[0];
   const runtime = r.sides.reduce((sum, s) => sum + (s.totalSeconds ?? 0), 0);
 
@@ -48,7 +63,7 @@ export function Release() {
       <div className="card">
         <div className="release-head">
           <CoverDisc coverUrl={r.coverUrl} alt={r.title} onClick={() => r.images.length && setLightbox(0)}
-            kind={formatFamily(r.formatSummary) === 'cd' ? 'cd' : 'vinyl'}
+            kind={discKind(r)}
             spinning={player.current?.releaseId === r.id && player.state.status === 'playing'} />
           <div style={{ minWidth: 0 }}>
             <h1>{r.title}</h1>
@@ -76,6 +91,7 @@ export function Release() {
               <button className="btn btn-primary" onClick={() => addPlay.mutate({}, { onSuccess: () => setToast('Logged a play') })}>
                 <PlayIcon /> Played it
               </button>
+              <button className="btn" onClick={spinNow}><Disc3 /> Spin now</button>
               <CrateMenu releaseId={r.id} inCrates={r.crates} />
               <a className="btn" href={r.discogsUrl} target="_blank" rel="noreferrer"><ExternalLink /> Discogs</a>
             </div>
@@ -114,14 +130,17 @@ export function Release() {
   );
 }
 
+const discKind = (r: ReleaseDetail) => (formatFamily(r.formatSummary) === 'cd' ? 'cd' : 'vinyl') as 'cd' | 'vinyl';
+
 /** Matched tracks of a record, in running order, as a player queue. */
-function queueFor(r: ReleaseDetail, info: PreviewInfo | undefined): QueueItem[] {
+export function queueFor(r: ReleaseDetail, info: PreviewInfo | undefined): QueueItem[] {
   if (!info || info.status === 'none') return [];
+  const kind = discKind(r);
   return r.sides.flatMap((s) => s.tracks)
     .filter((t) => t.type !== 'heading' && info.tracks[t.idx])
     .map((t) => ({
       releaseId: r.id, trackIdx: t.idx, title: t.title, artists: t.artists || r.artists, releaseTitle: r.title,
-      coverUrl: r.coverUrl, previewUrl: info.tracks[t.idx].previewUrl,
+      coverUrl: r.coverUrl, previewUrl: info.tracks[t.idx].previewUrl, kind,
     }));
 }
 

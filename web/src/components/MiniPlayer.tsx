@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { usePlayer } from '../player/PlayerProvider';
 import { fmtSeconds } from '../lib/format';
 import { CoverImage } from './CoverImage';
+import { SpinningNowButton } from './SpinningNowButton';
 
 export function MiniPlayer() {
   const p = usePlayer();
@@ -40,6 +41,7 @@ export function MiniPlayer() {
           {playing ? <Pause /> : <Play />}
         </button>
         <button className="icon-btn" onClick={p.next} aria-label="Next"><SkipForward /></button>
+        <SpinningNowButton />
         <button className="icon-btn" onClick={p.stop} aria-label="Close player"><X /></button>
       </div>
     </div>
