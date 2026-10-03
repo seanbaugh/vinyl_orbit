@@ -14,7 +14,7 @@ Apple TV (AirPlay screen mirroring) to show it on a big screen. The app does not
 1. **Mini-player track** — a preview is loaded in `PlayerProvider`. The view shows that album; the disc
    spins only while audio is playing; track title, `Album — Artist`, progress bar and `n/N` follow the queue.
 2. **Marked record** — the user pressed **Spin now** on a release page. No audio, so the disc spins
-   continuously. Title reads "Now spinning" with album and artist. A Stop button clears it.
+   continuously. Shows album title and artist. A Stop button clears it.
 3. Neither present: the Spinning now button is hidden.
 
 ## Changes
@@ -31,8 +31,11 @@ Apple TV (AirPlay screen mirroring) to show it on a big screen. The app does not
 
 ### Overlay
 - New `web/src/components/SpinningNow.tsx`, rendered from `App.tsx`; open state lives in `NowSpinningProvider` (so the release page can open it too).
-- Visuals: blurred, enlarged cover as background; `CoverDisc` centred and sized to the viewport (fills 16:9);
-  title, then `Album — Artist`; thin progress bar and `n/N` (preview source only).
+- Visuals: blurred, enlarged cover as background. Landscape: cover and disc (`CoverDisc`) on the left, album info on the
+  right, left-aligned; portrait: stacked and centred. A small letter-spaced "Now spinning" label sits at the top of the
+  screen (no large heading). Info: title in a display serif (system stack: Bodoni 72 / Didot, with fallbacks, so no web
+  font download), album in italic, artist in spaced capitals; thin progress bar and `n/N` (preview source only).
+  Preview source: title = track, album line = release title. Marked record: title = release title, no album line.
 - Controls (previous, play/pause, next, close; Stop for the marked source) fade out after 3 s without pointer
   movement, and the cursor hides. Keys: Space play/pause, arrows prev/next, Esc closes.
 - Requests the Fullscreen API on open and exits on close; if refused, remains a full-window overlay.

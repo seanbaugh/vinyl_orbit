@@ -11,8 +11,11 @@ export interface SpinSource {
   releaseId: number;
   coverUrl: string | null;
   discKind: 'vinyl' | 'cd';
+  /** Track title (preview) or album title (marked record). */
   headline: string;
-  subline: string;
+  /** Album name shown under a track title; null when the headline already is the album. */
+  album: string | null;
+  artist: string;
   spinning: boolean;
   progress?: number;
   position?: { index: number; total: number };
@@ -28,7 +31,7 @@ export function useSpinSource(): SpinSource | null {
   if (current) {
     return {
       kind: 'preview', releaseId: current.releaseId, coverUrl: current.coverUrl, discKind: current.kind ?? 'vinyl',
-      headline: current.title, subline: `${current.releaseTitle} — ${current.artists}`,
+      headline: current.title, album: current.releaseTitle, artist: current.artists,
       spinning: player.state.status === 'playing', progress: player.progress,
       position: { index: player.state.index, total: player.state.queue.length },
     };
@@ -37,7 +40,7 @@ export function useSpinSource(): SpinSource | null {
   return {
     kind: 'marked', releaseId: marked.id, coverUrl: marked.coverUrl,
     discKind: formatFamily(marked.formatSummary) === 'cd' ? 'cd' : 'vinyl',
-    headline: 'Now spinning', subline: `${marked.title} — ${marked.artists}`, spinning: true,
+    headline: marked.title, album: null, artist: marked.artists, spinning: true,
   };
 }
 
@@ -115,12 +118,14 @@ function Overlay({ src, onClose }: { src: SpinSource; onClose: () => void }) {
   return (
     <div ref={rootRef} tabIndex={-1} className={`spinning-now${idle ? ' idle' : ''}`} role="dialog" aria-label="Spinning now">
       {src.coverUrl && <div className="spinning-now-bg" style={{ backgroundImage: `url(${JSON.stringify(src.coverUrl)})` }} aria-hidden="true" />}
+      <div className="spinning-now-label">Now spinning</div>
       <div className="spinning-now-stage">
-        <CoverDisc coverUrl={src.coverUrl} alt={src.subline} spinning={src.spinning} kind={src.discKind} />
+        <CoverDisc coverUrl={src.coverUrl} alt={src.album ?? src.headline} spinning={src.spinning} kind={src.discKind} />
       </div>
       <div className="spinning-now-meta" key={src.headline}>
         <h1>{src.headline}</h1>
-        <p>{src.subline}</p>
+        {src.album && <p className="spinning-now-album">{src.album}</p>}
+        <p className="spinning-now-artist">{src.artist}</p>
         {src.position && (
           <>
             <div className="spinning-now-progress" aria-hidden="true"><div style={{ width: `${(src.progress ?? 0) * 100}%` }} /></div>

@@ -51,7 +51,8 @@ test('preview source shows track, album and artist', async () => {
   const { h, view } = setup();
   await act(async () => h.player.play([item(1), item(2)], 0));
   expect(view.getByRole('heading', { name: 'Track 1' })).toBeTruthy();
-  expect(view.getByText('The Album — The Artist')).toBeTruthy();
+  expect(view.getByText('The Album')).toBeTruthy();
+  expect(view.getByText('The Artist')).toBeTruthy();
   expect(view.getByText('1/2')).toBeTruthy();
 });
 
@@ -74,12 +75,12 @@ test('disc has the spinning class only while status is playing', async () => {
   expect(view.container.querySelector('.cover-disc.spinning')).toBeNull(); // paused
 });
 
-test('marked record spins continuously and reads Now spinning', () => {
+test('marked record spins continuously and shows its album and artist', () => {
   useReleaseMock.mockReturnValue(marked());
   const { h, view } = setup();
   act(() => h.ns.set(5));
-  expect(view.getByRole('heading', { name: 'Now spinning' })).toBeTruthy();
-  expect(view.getByText('Marked LP — Marked Artist')).toBeTruthy();
+  expect(view.getByRole('heading', { name: 'Marked LP' })).toBeTruthy();
+  expect(view.getByText('Marked Artist')).toBeTruthy();
   expect(view.container.querySelector('.cover-disc.spinning')).toBeTruthy();
 });
 
@@ -96,7 +97,7 @@ test('preview source wins over the marked record', async () => {
   act(() => h.ns.set(5));
   await act(async () => h.player.play([item(1)], 0));
   expect(view.getByRole('heading', { name: 'Track 1' })).toBeTruthy();
-  expect(view.queryByText('Marked LP — Marked Artist')).toBeNull();
+  expect(view.queryByText('Marked Artist')).toBeNull();
 });
 
 test('renders nothing with no source', () => {
@@ -254,4 +255,23 @@ test('keeps the marked record loaded while a preview plays, so the fallback is r
   act(() => h.ns.set(5));
   await act(async () => h.player.play([item(1)], 0));
   expect(useReleaseMock).toHaveBeenLastCalledWith(5);
+});
+
+test('"Now spinning" is a small label at the top, not a heading, for both sources', async () => {
+  useReleaseMock.mockReturnValue(marked());
+  const { h, view } = setup();
+  act(() => h.ns.set(5));
+  expect(view.getByText('Now spinning').className).toContain('spinning-now-label');
+  expect(view.queryByRole('heading', { name: 'Now spinning' })).toBeNull();
+  await act(async () => h.player.play([item(1)], 0));
+  expect(view.getByText('Now spinning').className).toContain('spinning-now-label');
+  expect(view.queryByRole('heading', { name: 'Now spinning' })).toBeNull();
+});
+
+test('art sits left of the album info', async () => {
+  const { h, view } = setup();
+  await act(async () => h.player.play([item(1)], 0));
+  const stage = view.container.querySelector('.spinning-now-stage')!;
+  const info = view.container.querySelector('.spinning-now-meta')!;
+  expect(stage.compareDocumentPosition(info) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 });
