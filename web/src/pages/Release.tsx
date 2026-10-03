@@ -14,7 +14,7 @@ import { CrateMenu } from '../components/CrateMenu';
 import { Lightbox } from '../components/Lightbox';
 import { TagEditor } from '../components/TagEditor';
 import { createAutosaver } from '../lib/autosave';
-import { formatClass } from '../lib/formats';
+import { formatClass, formatFamily } from '../lib/formats';
 import { fmtDate, fmtInt, fmtMoney, fmtRelative, fmtSeconds, localToday } from '../lib/format';
 
 const TABS = ['tracks', 'notes', 'history', 'details'] as const;
@@ -48,6 +48,7 @@ export function Release() {
       <div className="card">
         <div className="release-head">
           <CoverDisc coverUrl={r.coverUrl} alt={r.title} onClick={() => r.images.length && setLightbox(0)}
+            kind={formatFamily(r.formatSummary) === 'cd' ? 'cd' : 'vinyl'}
             spinning={player.current?.releaseId === r.id && player.state.status === 'playing'} />
           <div style={{ minWidth: 0 }}>
             <h1>{r.title}</h1>
