@@ -5,11 +5,10 @@ import { expect, test } from 'vitest';
 const css = readFileSync(new URL('./theme.css', import.meta.url), 'utf8');
 const rule = css.match(/\n\.spinning-now-bg\s*\{[^}]*\}/)?.[0] ?? '';
 
-// A huge blurred layer is rasterised in tiles by WebKit and shows hard-edged bands that shift on repaint.
-// The backdrop must be a small element, lightly blurred, scaled up by the compositor.
-test('the spinning-now backdrop blurs a small element and scales it up, instead of one huge blur', () => {
-  const blur = Number(rule.match(/blur\((\d+)px\)/)?.[1]);
-  const scale = Number(rule.match(/scale\(([\d.]+)\)/)?.[1]);
-  expect(blur).toBeLessThanOrEqual(24);
-  expect(scale).toBeGreaterThanOrEqual(3);
+// A live blur filter on the full-screen backdrop made WebKit draw hard-edged bands (one huge layer) and then made the
+// spinning disc jerk (a small layer scaled up, redrawn every frame). The blur is baked into a tiny canvas instead.
+test('the spinning-now backdrop has no live filter, so spinning stays on the cheap compositing path', () => {
+  expect(rule).not.toBe('');
+  expect(rule).not.toMatch(/filter\s*:/);
+  expect(rule).not.toMatch(/will-change/);
 });
