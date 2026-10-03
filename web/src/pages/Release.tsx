@@ -48,7 +48,7 @@ export function Release() {
       <div className="card">
         <div className="release-head">
           <CoverDisc coverUrl={r.coverUrl} alt={r.title} onClick={() => r.images.length && setLightbox(0)}
-            kind={formatFamily(r.formatSummary) === 'cd' ? 'cd' : 'vinyl'}
+            kind={discKind(r)}
             spinning={player.current?.releaseId === r.id && player.state.status === 'playing'} />
           <div style={{ minWidth: 0 }}>
             <h1>{r.title}</h1>
@@ -114,14 +114,17 @@ export function Release() {
   );
 }
 
+const discKind = (r: ReleaseDetail) => (formatFamily(r.formatSummary) === 'cd' ? 'cd' : 'vinyl') as 'cd' | 'vinyl';
+
 /** Matched tracks of a record, in running order, as a player queue. */
-function queueFor(r: ReleaseDetail, info: PreviewInfo | undefined): QueueItem[] {
+export function queueFor(r: ReleaseDetail, info: PreviewInfo | undefined): QueueItem[] {
   if (!info || info.status === 'none') return [];
+  const kind = discKind(r);
   return r.sides.flatMap((s) => s.tracks)
     .filter((t) => t.type !== 'heading' && info.tracks[t.idx])
     .map((t) => ({
       releaseId: r.id, trackIdx: t.idx, title: t.title, artists: t.artists || r.artists, releaseTitle: r.title,
-      coverUrl: r.coverUrl, previewUrl: info.tracks[t.idx].previewUrl,
+      coverUrl: r.coverUrl, previewUrl: info.tracks[t.idx].previewUrl, kind,
     }));
 }
 

@@ -6,6 +6,8 @@ export interface QueueItem {
   releaseTitle: string;
   coverUrl: string | null;
   previewUrl: string;
+  /** Which disc to draw next to the cover; absent means vinyl. */
+  kind?: 'vinyl' | 'cd';
 }
 
 export interface PlayerState {
