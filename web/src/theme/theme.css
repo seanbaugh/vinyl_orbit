@@ -466,14 +466,13 @@ table.data td.clip { max-width: 260px; overflow: hidden; text-overflow: ellipsis
   transition: transform 0.6s cubic-bezier(.2, .8, .2, 1);
   animation: disc-slide 0.4s ease-out;
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.07), 0 6px 24px rgba(0, 0, 0, 0.45);
-}
-@keyframes disc-slide { from { transform: translateX(0); } }
-.cover-disc-spin {
-  position: absolute; inset: 0; border-radius: 50%;
+  /* Grooves are circularly symmetric, so they stay on the static record; only the label and sheen rotate. */
   background:
     radial-gradient(circle, transparent 0 18.5%, rgba(255,255,255,0.05) 19%, transparent 20%),
     repeating-radial-gradient(circle, #121212 0 2px, #1b1b1b 2px 4px);
 }
+@keyframes disc-slide { from { transform: translateX(0); } }
+.cover-disc-spin { position: absolute; inset: 0; border-radius: 50%; }
 .cover-disc-spin::after {
   content: ''; position: absolute; inset: 0; border-radius: 50%;
   background: conic-gradient(from 20deg, transparent 0 30deg, rgba(255,255,255,0.07) 45deg, transparent 60deg 200deg,
@@ -492,8 +491,8 @@ table.data td.clip { max-width: 260px; overflow: hidden; text-overflow: ellipsis
 .cover-disc-sleeve { position: relative; z-index: 1; cursor: zoom-in; box-shadow: var(--shadow); }
 
 /* Compact disc: silver data surface with a rainbow sheen, clear hub ring, small hole */
-.cover-disc.cd .cover-disc-record { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.25), 0 6px 24px rgba(0, 0, 0, 0.45); }
-.cover-disc.cd .cover-disc-spin {
+.cover-disc.cd .cover-disc-record {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.25), 0 6px 24px rgba(0, 0, 0, 0.45);
   background:
     radial-gradient(circle, transparent 0 17%, rgba(255, 255, 255, 0.55) 17.5% 18.5%, transparent 19%),
     radial-gradient(circle, #e9ecef 0 30%, #c9ced4 31%, #dde1e5 60%, #b8bec6 99%, #9aa1aa 100%);
