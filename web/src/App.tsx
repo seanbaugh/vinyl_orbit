@@ -5,6 +5,7 @@ import { MiniPlayer } from './components/MiniPlayer';
 import { usePlayer } from './player/PlayerProvider';
 import { Sidebar } from './components/Sidebar';
 import { TopBar } from './components/TopBar';
+import { VinylBackdrop } from './components/VinylBackdrop';
 import { KeyedByParam } from './lib/routing';
 import { Browse } from './pages/Browse';
 import { CratePage } from './pages/Crate';
@@ -38,6 +39,7 @@ export function App() {
 
   return (
     <div className="app">
+      <VinylBackdrop />
       <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
       <div className="main">
         <TopBar onMenu={() => setMenuOpen(true)} onSearch={() => setPaletteOpen(true)} />

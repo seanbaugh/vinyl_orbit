@@ -4,6 +4,7 @@ import {
 import { useState, type ReactNode } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useCreateCrate, useFacets } from '../api/hooks';
+import { Logo } from './Logo';
 import { SyncPanel } from './SyncPanel';
 
 function Group({ title, action, children }: { title: string; action?: ReactNode; children: ReactNode }) {
@@ -50,8 +51,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
       <div className={`scrim${open ? ' open' : ''}`} onClick={onClose} />
       <aside className={`sidebar${open ? ' open' : ''}`} onClick={(e) => (e.target as HTMLElement).closest('a') && onClose()}>
         <div className="brand">
-          <div className="brand-mark"><Disc3 size={20} /></div>
-          <div className="wordmark">Vinyl <span>Orbit</span></div>
+          <Logo />
         </div>
         <nav className="nav">
           <Link to="/" icon={<LayoutDashboard />} label="Dashboard" />

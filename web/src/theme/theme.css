@@ -18,7 +18,8 @@
   --groove: rgba(255, 255, 255, 0.035);
   --sidebar-w: 248px;
   --font: 'Inter', system-ui, -apple-system, sans-serif;
-  --serif: 'Fraunces', Georgia, serif;
+  --groove-line: rgba(255, 255, 255, 0.06);
+  --groove-sheen: rgba(255, 255, 255, 0.06);
   color-scheme: dark;
 }
 
@@ -35,6 +36,8 @@
   --accent-ink: #ffffff;
   --shadow: 0 8px 30px rgba(20, 40, 36, 0.12);
   --groove: rgba(0, 0, 0, 0.035);
+  --groove-line: rgba(0, 0, 0, 0.06);
+  --groove-sheen: rgba(0, 0, 0, 0.04);
   color-scheme: light;
 }
 
@@ -48,8 +51,6 @@ body {
   line-height: 1.45;
   color: var(--text);
   background-color: var(--bg);
-  background-image: repeating-radial-gradient(circle at 70% 120%, transparent 0 7px, var(--groove) 7px 8px);
-  background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
 }
 a { color: inherit; text-decoration: none; }
@@ -61,7 +62,6 @@ img { display: block; }
 
 .muted { color: var(--muted); }
 .faint { color: var(--faint); }
-.serif { font-family: var(--serif); }
 .accent { color: var(--accent); }
 .row { display: flex; align-items: center; gap: 8px; }
 .wrap { flex-wrap: wrap; }
@@ -70,7 +70,10 @@ img { display: block; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 
 /* ------------------------------------------------------------------ layout */
-.app { display: flex; height: 100%; }
+.app { display: flex; height: 100%; position: relative; }
+/* Lift the layout columns above the fixed vinyl backdrop (overlays keep their own fixed positioning). */
+.main { position: relative; z-index: 1; }
+@media (min-width: 901px) { .sidebar { position: relative; z-index: 1; } }
 .main { flex: 1; min-width: 0; display: flex; flex-direction: column; padding: 12px 12px 12px 0; gap: 12px; }
 .content { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 4px 32px; }
 .page { max-width: 1400px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
@@ -96,7 +99,9 @@ img { display: block; }
   width: 34px; height: 34px; border-radius: 9px; background: var(--accent); display: grid; place-items: center;
   color: var(--accent-ink);
 }
-.wordmark { font-family: var(--serif); font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+.logo { display: inline-flex; align-items: center; gap: 10px; }
+.logo-mark { flex-shrink: 0; }
+.wordmark { font-family: var(--font); font-size: 21px; font-weight: 600; letter-spacing: -0.03em; line-height: 1; }
 .wordmark span { color: var(--accent); }
 .nav { flex: 1; overflow-y: auto; padding: 10px 8px; }
 .nav-group { margin-top: 14px; }
@@ -418,4 +423,65 @@ table.data td.clip { max-width: 260px; overflow: hidden; text-overflow: ellipsis
 }
 @media (prefers-reduced-motion: reduce) {
   .eq i { animation: none; height: 8px; }
+}
+
+/* ------------------------------------------------------------------ vinyl visuals */
+@keyframes vo-spin { to { transform: rotate(360deg); } }
+
+.vinyl-backdrop { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.vinyl-backdrop-disc {
+  position: absolute; width: 1100px; height: 1100px;
+  left: calc(100% - 550px + 110px); top: calc(100% - 550px + 150px);
+  animation: vo-spin 180s linear infinite;
+}
+.vinyl-backdrop-disc svg { display: block; }
+.vinyl-backdrop-label { fill: color-mix(in srgb, var(--accent) 7%, transparent); }
+.vinyl-backdrop-sheen {
+  position: absolute; inset: 0; border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0deg 40deg, var(--groove-sheen) 55deg, transparent 70deg 220deg,
+    var(--groove-sheen) 235deg, transparent 250deg);
+  -webkit-mask: radial-gradient(circle, transparent 0 180px, #000 181px 545px, transparent 546px);
+  mask: radial-gradient(circle, transparent 0 180px, #000 181px 545px, transparent 546px);
+}
+
+.release-head { grid-template-columns: minmax(200px, 300px) 1fr; column-gap: calc(28px + 96px); }
+.cover-disc { --disc-out: 22%; position: relative; width: 100%; aspect-ratio: 1; }
+.cover-disc.spinning { --disc-out: 32%; }
+.cover-disc-record {
+  position: absolute; inset: 2%; border-radius: 50%; transform: translateX(var(--disc-out));
+  transition: transform 0.6s cubic-bezier(.2, .8, .2, 1);
+  animation: disc-slide 0.4s ease-out;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.07), 0 6px 24px rgba(0, 0, 0, 0.45);
+}
+@keyframes disc-slide { from { transform: translateX(0); } }
+.cover-disc-spin {
+  position: absolute; inset: 0; border-radius: 50%;
+  background:
+    radial-gradient(circle, transparent 0 18.5%, rgba(255,255,255,0.05) 19%, transparent 20%),
+    repeating-radial-gradient(circle, #121212 0 2px, #1b1b1b 2px 4px);
+}
+.cover-disc-spin::after {
+  content: ''; position: absolute; inset: 0; border-radius: 50%;
+  background: conic-gradient(from 20deg, transparent 0 30deg, rgba(255,255,255,0.07) 45deg, transparent 60deg 200deg,
+    rgba(255,255,255,0.05) 215deg, transparent 230deg);
+}
+.cover-disc.spinning .cover-disc-spin { animation: vo-spin 1.8s linear infinite; }
+.cover-disc-label {
+  position: absolute; width: 36%; height: 36%; left: 32%; top: 32%; border-radius: 50%; object-fit: cover;
+  background: var(--accent);
+}
+.cover-disc-hole {
+  position: absolute; width: 4%; height: 4%; left: 48%; top: 48%; border-radius: 50%; background: var(--bg); z-index: 1;
+}
+.cover-disc-sleeve { position: relative; z-index: 1; cursor: zoom-in; box-shadow: var(--shadow); }
+
+@media (max-width: 900px) {
+  .release-head { grid-template-columns: 1fr; column-gap: 0; }
+  .cover-disc { --disc-out: 14%; max-width: 300px; margin-right: 60px; }
+  .cover-disc.spinning { --disc-out: 20%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vinyl-backdrop-disc, .cover-disc.spinning .cover-disc-spin { animation: none; }
+  .cover-disc-record { animation: none; transition: none; }
 }

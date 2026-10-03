@@ -9,7 +9,7 @@ import { useAddPlay, useDeletePlay, usePreviews, useRelease, useSaveNote } from 
 import { PreviewBar } from '../components/PreviewBar';
 import { usePlayer } from '../player/PlayerProvider';
 import type { QueueItem } from '../player/queue';
-import { CoverImage } from '../components/CoverImage';
+import { CoverDisc } from '../components/CoverDisc';
 import { CrateMenu } from '../components/CrateMenu';
 import { Lightbox } from '../components/Lightbox';
 import { TagEditor } from '../components/TagEditor';
@@ -27,6 +27,7 @@ export function Release() {
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const addPlay = useAddPlay(id);
+  const player = usePlayer();
 
   useEffect(() => {
     if (!toast) return;
@@ -45,7 +46,8 @@ export function Release() {
       {r.removed && <div className="banner">This record is no longer in your Discogs collection. Your notes and plays are kept.</div>}
       <div className="card">
         <div className="release-head">
-          <CoverImage src={r.coverUrl} alt={r.title} onClick={() => r.images.length && setLightbox(0)} />
+          <CoverDisc coverUrl={r.coverUrl} alt={r.title} onClick={() => r.images.length && setLightbox(0)}
+            spinning={player.current?.releaseId === r.id && player.state.status === 'playing'} />
           <div style={{ minWidth: 0 }}>
             <h1>{r.title}</h1>
             <div className="release-artists">
