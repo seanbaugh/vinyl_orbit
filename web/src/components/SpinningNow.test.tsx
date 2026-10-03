@@ -116,3 +116,121 @@ test('null cover renders the placeholder', async () => {
   await act(async () => h.player.play([item(1, { coverUrl: null })], 0));
   expect(view.container.querySelector('.spinning-now .placeholder')).toBeTruthy();
 });
+
+// ---------------------------------------------------------------- behaviours
+
+const setFullscreenElement = (el: Element | null) =>
+  Object.defineProperty(document, 'fullscreenElement', { configurable: true, get: () => el });
+
+function stubBrowser(over: { requestFullscreen?: () => Promise<void>; wakeLock?: unknown } = {}) {
+  const release = vi.fn(() => Promise.resolve());
+  const request = vi.fn(() => Promise.resolve({ release }));
+  const requestFullscreen = vi.fn(over.requestFullscreen ?? (() => Promise.resolve()));
+  const exitFullscreen = vi.fn(() => Promise.resolve());
+  document.documentElement.requestFullscreen = requestFullscreen;
+  document.exitFullscreen = exitFullscreen;
+  Object.defineProperty(navigator, 'wakeLock', { configurable: true, value: 'wakeLock' in over ? over.wakeLock : { request } });
+  setFullscreenElement(null);
+  return { release, request, requestFullscreen, exitFullscreen };
+}
+
+const flush = () => act(() => new Promise((r) => setTimeout(r, 0)));
+
+test('requests fullscreen and a wake lock on open', async () => {
+  const b = stubBrowser();
+  const { h } = setup();
+  await act(async () => h.player.play([item(1)], 0));
+  await flush();
+  expect(b.requestFullscreen).toHaveBeenCalledTimes(1);
+  expect(b.request).toHaveBeenCalledWith('screen');
+});
+
+test('does not request fullscreen while there is nothing to show', async () => {
+  const b = stubBrowser();
+  setup();
+  await flush();
+  expect(b.requestFullscreen).not.toHaveBeenCalled();
+});
+
+test('still renders when requestFullscreen rejects and wakeLock is undefined', async () => {
+  stubBrowser({ requestFullscreen: () => Promise.reject(new Error('denied')), wakeLock: undefined });
+  const { h, view } = setup();
+  await act(async () => h.player.play([item(1)], 0));
+  await flush();
+  expect(view.getByRole('heading', { name: 'Track 1' })).toBeTruthy();
+});
+
+test('releases the wake lock and exits fullscreen on unmount', async () => {
+  const b = stubBrowser();
+  const { h, view } = setup();
+  await act(async () => h.player.play([item(1)], 0));
+  await flush();
+  setFullscreenElement(document.documentElement);
+  view.unmount();
+  await flush();
+  expect(b.release).toHaveBeenCalled();
+  expect(b.exitFullscreen).toHaveBeenCalled();
+});
+
+test('closes when the browser leaves fullscreen', async () => {
+  stubBrowser();
+  const { h, onClose } = setup();
+  await act(async () => h.player.play([item(1)], 0));
+  setFullscreenElement(document.documentElement);
+  act(() => { document.dispatchEvent(new Event('fullscreenchange')); });
+  expect(onClose).not.toHaveBeenCalled();
+  setFullscreenElement(null);
+  act(() => { document.dispatchEvent(new Event('fullscreenchange')); });
+  expect(onClose).toHaveBeenCalledTimes(1);
+});
+
+test('Escape and the Close button call onClose', async () => {
+  stubBrowser();
+  const { h, view, onClose } = setup();
+  await act(async () => h.player.play([item(1)], 0));
+  act(() => { window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); });
+  expect(onClose).toHaveBeenCalledTimes(1);
+  act(() => { view.getByRole('button', { name: 'Close' }).click(); });
+  expect(onClose).toHaveBeenCalledTimes(2);
+});
+
+test('Space toggles and arrows move between tracks for a preview', async () => {
+  stubBrowser();
+  const { h, audio } = setup();
+  await act(async () => h.player.play([item(1), item(2)], 0));
+  await act(async () => audio.fire('playing'));
+  act(() => { window.dispatchEvent(new KeyboardEvent('keydown', { key: ' ' })); });
+  expect(h.player.state.status).toBe('paused');
+  act(() => { window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight' })); });
+  expect(h.player.state.index).toBe(1);
+  act(() => { window.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft' })); });
+  expect(h.player.state.index).toBe(0);
+});
+
+test('Stop clears the marked record and closes', () => {
+  stubBrowser();
+  useReleaseMock.mockReturnValue(marked());
+  const { h, view, onClose } = setup();
+  act(() => h.ns.set(5));
+  expect(view.queryByRole('button', { name: 'Next' })).toBeNull();
+  act(() => { view.getByRole('button', { name: 'Stop' }).click(); });
+  expect(h.ns.releaseId).toBeNull();
+  expect(onClose).toHaveBeenCalledTimes(1);
+});
+
+test('controls go idle after 3s and return on pointermove', async () => {
+  stubBrowser();
+  vi.useFakeTimers();
+  try {
+    const { h, view } = setup();
+    await act(async () => h.player.play([item(1)], 0));
+    const root = () => view.container.querySelector('.spinning-now')!;
+    expect(root().classList.contains('idle')).toBe(false);
+    act(() => { vi.advanceTimersByTime(3000); });
+    expect(root().classList.contains('idle')).toBe(true);
+    act(() => { window.dispatchEvent(new Event('pointermove')); });
+    expect(root().classList.contains('idle')).toBe(false);
+  } finally {
+    vi.useRealTimers();
+  }
+});
