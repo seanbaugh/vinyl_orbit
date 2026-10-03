@@ -256,7 +256,7 @@ function History({ r }: { r: ReleaseDetail }) {
                 <YAxis hide domain={['auto', 'auto']} />
                 <Tooltip formatter={(v) => fmtMoney(Number(v))} labelFormatter={(_, p) => fmtDate(p?.[0]?.payload?.date)}
                   contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8 }} />
-                <Line type="monotone" dataKey="lowestPrice" stroke="var(--accent)" strokeWidth={2} dot={false} />
+                <Line isAnimationActive={false} type="monotone" dataKey="lowestPrice" stroke="var(--accent)" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>

@@ -233,7 +233,7 @@ a.chip:hover, button.chip:hover { border-color: var(--border-strong); }
 .shelf-head svg { width: 16px; height: 16px; color: var(--accent); }
 .shelf-row { display: grid; grid-auto-flow: column; grid-auto-columns: 150px; gap: 14px; overflow-x: auto; padding-bottom: 6px; scroll-snap-type: x proximity; }
 .shelf-row > * { scroll-snap-align: start; }
-.stat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.stat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
 .stat { padding: 16px; display: flex; flex-direction: column; gap: 6px; }
 .stat .label { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 13px; }
 .stat .label svg { width: 15px; height: 15px; color: var(--accent); }
