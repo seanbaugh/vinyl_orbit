@@ -7,6 +7,7 @@ export interface Config {
   detailRefreshDays: number;
   detailRefreshPerRun: number;
   currency: string;
+  previewCountry: string;
 }
 
 type Env = Record<string, string | undefined>;
@@ -36,5 +37,6 @@ export function loadConfig(env: Env = process.env): Config {
     detailRefreshDays: num(env, 'DETAIL_REFRESH_DAYS', 7),
     detailRefreshPerRun: num(env, 'DETAIL_REFRESH_PER_RUN', 15),
     currency: str(env, 'CURRENCY', 'USD'),
+    previewCountry: str(env, 'PREVIEW_COUNTRY', 'US'),
   };
 }

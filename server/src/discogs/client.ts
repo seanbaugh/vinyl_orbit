@@ -1,9 +1,9 @@
+import { getJson as getJsonWithRetry } from '../lib/http.js';
 import { RateLimiter, realClock } from './rateLimiter.js';
 import type { CollectionPage, DiscogsRelease } from './types.js';
 
 const API = 'https://api.discogs.com';
 export const USER_AGENT = 'VinylOrbit/1.0 +https://github.com/seanmikel/vinyl-orbit';
-const MAX_RETRIES = 5;
 
 export class DiscogsError extends Error {
   constructor(message: string, public readonly status: number) {
@@ -34,26 +34,8 @@ export function createDiscogsClient(opts: DiscogsClientOptions): DiscogsClient {
   const headers: Record<string, string> = { 'User-Agent': USER_AGENT };
   if (opts.token) headers.Authorization = `Discogs token=${opts.token}`;
 
-  async function getJson<T>(url: string): Promise<T> {
-    for (let attempt = 0; ; attempt++) {
-      await limiter.take();
-      const res = await doFetch(url, { headers });
-      if (res.ok) return (await res.json()) as T;
-      if (res.status === 429 && attempt < MAX_RETRIES) {
-        const retryAfter = Number(res.headers.get('Retry-After'));
-        await sleep(retryAfter > 0 ? retryAfter * 1000 : 2 ** (attempt + 1) * 1000);
-        continue;
-      }
-      let message = res.statusText || `HTTP ${res.status}`;
-      try {
-        const body = (await res.json()) as { message?: string };
-        if (body.message) message = body.message;
-      } catch {
-        // non-JSON error body
-      }
-      throw new DiscogsError(`${message} (${url})`, res.status);
-    }
-  }
+  const getJson = <T>(url: string) =>
+    getJsonWithRetry<T>({ url, headers, fetch: doFetch, limiter, sleep, fail: (m, status) => new DiscogsError(m, status) });
 
   return {
     getCollectionPage(page, perPage = 100) {

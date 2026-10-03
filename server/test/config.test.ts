@@ -11,6 +11,7 @@ test('defaults', () => {
     detailRefreshDays: 7,
     detailRefreshPerRun: 15,
     currency: 'USD',
+    previewCountry: 'US',
   });
 });
 
@@ -28,4 +29,8 @@ test('overrides', () => {
 test('empty token is null; non-numeric number throws', () => {
   expect(loadConfig({ DISCOGS_TOKEN: '' }).token).toBeNull();
   expect(() => loadConfig({ PORT: 'abc' })).toThrow(/PORT/);
+});
+
+test('preview country override', () => {
+  expect(loadConfig({ PREVIEW_COUNTRY: 'GB' }).previewCountry).toBe('GB');
 });
