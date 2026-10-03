@@ -479,7 +479,9 @@ table.data td.clip { max-width: 260px; overflow: hidden; text-overflow: ellipsis
   background: conic-gradient(from 20deg, transparent 0 30deg, rgba(255,255,255,0.07) 45deg, transparent 60deg 200deg,
     rgba(255,255,255,0.05) 215deg, transparent 230deg);
 }
-.cover-disc.spinning .cover-disc-spin { animation: vo-spin 1.8s linear infinite; }
+/* will-change + backface-visibility give the disc its own layer so Safari rotates it on the GPU instead of redrawing
+   its gradients every frame (only while spinning, to avoid keeping a big layer around for idle discs) */
+.cover-disc.spinning .cover-disc-spin { animation: vo-spin 1.8s linear infinite; will-change: transform; backface-visibility: hidden; }
 .cover-disc-label {
   position: absolute; width: 36%; height: 36%; left: 32%; top: 32%; border-radius: 50%; object-fit: cover;
   background: var(--accent);
