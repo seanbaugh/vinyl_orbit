@@ -138,8 +138,9 @@ export function useTriggerSync() {
 
 // ---------------------------------------------------------------- previews
 
-export const usePreviews = (releaseId: number) =>
+export const usePreviews = (releaseId: number, enabled = true) =>
   useQuery({
+    enabled,
     queryKey: ['previews', releaseId],
     queryFn: () => api.get<PreviewInfo>(`/api/releases/${releaseId}/previews`),
     retry: false,

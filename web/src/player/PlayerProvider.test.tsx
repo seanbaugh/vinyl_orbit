@@ -70,3 +70,21 @@ test('isPlayingRelease / isCurrent', async () => {
   expect(t.api.isCurrent(1, 1)).toBe(true);
   expect(t.api.isCurrent(1, 0)).toBe(false);
 });
+
+test('final: a failing clip (error event + rejected play) advances exactly once and is reported', async () => {
+  const audio = new FakeAudio();
+  const failed: number[] = [];
+  let api!: ReturnType<typeof usePlayer>;
+  const Probe = () => { api = usePlayer(); return null; };
+  render(<PlayerProvider createAudio={() => audio as unknown as HTMLAudioElement} onClipError={(i) => failed.push(i.trackIdx)}><Probe /></PlayerProvider>);
+  audio.playImpl = () => {
+    if (audio.src !== 'https://x/u0') return Promise.resolve();
+    audio.fire('error');
+    return Promise.reject(new DOMException('bad src', 'NotSupportedError'));
+  };
+  await act(async () => api.play([item(0), item(1), item(2)], 0));
+  await flush();
+  await flush();
+  expect(api.current?.trackIdx).toBe(1);
+  expect(failed).toEqual([0]);
+});

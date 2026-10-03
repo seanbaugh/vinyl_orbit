@@ -43,4 +43,10 @@ export function previewRoutes(app: FastifyInstance, { previews }: { previews: Pr
     const { id } = parse(idParam, req.params);
     return (await apple(req, () => previews.reset(id))) ?? notFound(reply);
   });
+
+  app.post('/api/releases/:id/previews/:idx/failed', async (req, reply) => {
+    const p = parse(idParam.extend({ idx: z.coerce.number().int().min(0) }), req.params);
+    previews.markFailed(p.id, p.idx);
+    return reply.code(204).send();
+  });
 }

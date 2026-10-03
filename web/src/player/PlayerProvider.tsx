@@ -19,9 +19,11 @@ export interface PlayerApi {
 const PlayerContext = createContext<PlayerApi | null>(null);
 
 /** One audio element for the whole app; survives navigation because it lives above the router outlet. */
-export function PlayerProvider({ children, createAudio = () => new Audio() }: {
+export function PlayerProvider({ children, createAudio = () => new Audio(), onClipError }: {
   children: ReactNode;
   createAudio?: () => HTMLAudioElement;
+  /** Called once when a clip fails to load (e.g. an expired preview URL). */
+  onClipError?: (item: QueueItem) => void;
 }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   if (!audioRef.current) audioRef.current = createAudio();
@@ -33,6 +35,8 @@ export function PlayerProvider({ children, createAudio = () => new Audio() }: {
   const current = state.queue[state.index] ?? null;
   const currentRef = useRef(current);
   currentRef.current = current;
+  const onClipErrorRef = useRef(onClipError);
+  onClipErrorRef.current = onClipError;
 
   // Events from a clip that is no longer current (late 'ended', 'error' after a switch) are ignored.
   const isCurrentSrc = useCallback(() => !!currentRef.current && audio.src === currentRef.current.previewUrl, [audio]);
@@ -42,7 +46,11 @@ export function PlayerProvider({ children, createAudio = () => new Audio() }: {
       ['playing', () => isCurrentSrc() && dispatch({ type: 'playing' })],
       ['pause', () => isCurrentSrc() && !audio.ended && dispatch({ type: 'paused' })],
       ['ended', () => isCurrentSrc() && dispatch({ type: 'ended' })],
-      ['error', () => isCurrentSrc() && dispatch({ type: 'error' })],
+      ['error', () => {
+        if (!isCurrentSrc()) return;
+        onClipErrorRef.current?.(currentRef.current!);
+        dispatch({ type: 'error' });
+      }],
       ['timeupdate', () => {
         if (!isCurrentSrc()) return;
         setDuration(audio.duration || 0);
@@ -68,9 +76,8 @@ export function PlayerProvider({ children, createAudio = () => new Audio() }: {
       const src = current.previewUrl;
       audio.play().catch((e: unknown) => {
         if (audio.src !== src) return; // superseded
-        const name = (e as { name?: string })?.name;
-        if (name === 'AbortError') return; // interrupted by a newer load
-        dispatch({ type: name === 'NotAllowedError' ? 'paused' : 'error' });
+        // Load failures are handled once, by the 'error' event; only a blocked autoplay needs handling here.
+        if ((e as { name?: string })?.name === 'NotAllowedError') dispatch({ type: 'paused' });
       });
     } else if (state.status === 'paused' && !audio.paused) {
       audio.pause();

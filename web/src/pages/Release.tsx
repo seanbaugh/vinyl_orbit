@@ -125,7 +125,7 @@ function queueFor(r: ReleaseDetail, info: PreviewInfo | undefined): QueueItem[] 
 }
 
 function Tracks({ r }: { r: ReleaseDetail }) {
-  const previews = usePreviews(r.id);
+  const previews = usePreviews(r.id, !!r.detailSyncedAt && r.sides.length > 0);
   const player = usePlayer();
   if (!r.detailSyncedAt) return <div className="muted">The tracklist will appear after the next sync.</div>;
   if (!r.sides.length) return <div className="muted">Discogs has no tracklist for this release.</div>;

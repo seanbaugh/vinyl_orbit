@@ -159,3 +159,35 @@ test('Discogs sync leaves preview data alone', async () => {
 test('track rows carry their idx', () => {
   expect(typeof getReleaseDetail(db, 7455230)!.sides[0].tracks[0].idx).toBe('number');
 });
+
+test('final: a record opened before its tracklist syncs is not cached as unmatched', async () => {
+  const { client } = fakeItunes();
+  const svc = createPreviewService({ db, itunes: client });
+  db.prepare('DELETE FROM tracks WHERE release_id = 7455230').run();
+  const early = (await svc.get(7455230))!;
+  expect(early.status).toBe('unmatched');
+  expect(db.prepare('SELECT count(*) AS n FROM preview_matches WHERE release_id = 7455230').get()).toEqual({ n: 0 });
+  applyDetail(db, release(7455230), NOW);
+  expect((await svc.get(7455230))!.status).toBe('auto');
+});
+
+test('final: an unmatched row older than the latest detail sync is retried', async () => {
+  const svc = createPreviewService({ db, itunes: fakeItunes({ empty: true }).client });
+  expect((await svc.get(7455230))!.status).toBe('unmatched');
+  db.prepare("UPDATE preview_matches SET matched_at = '2000-01-01T00:00:00.000Z' WHERE release_id = 7455230").run();
+  const { client, calls } = fakeItunes();
+  const svc2 = createPreviewService({ db, itunes: client });
+  expect((await svc2.get(7455230))!.status).toBe('auto');
+  expect(calls.searchAlbums).toBe(1);
+});
+
+test('final: a preview reported as failed is re-mapped on the next get', async () => {
+  const { client, calls } = fakeItunes();
+  const svc = createPreviewService({ db, itunes: client });
+  const info = (await svc.get(7455230))!;
+  const idx = Number(Object.keys(info.tracks)[0]);
+  expect(svc.markFailed(7455230, idx)).toBe(true);
+  expect(svc.markFailed(7455230, 99999)).toBe(false);
+  await svc.get(7455230);
+  expect(calls.searchAlbums).toBe(2);
+});

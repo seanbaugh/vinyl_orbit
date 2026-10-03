@@ -15,7 +15,12 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <PlayerProvider>
+        <PlayerProvider onClipError={(item) => {
+          // Expired preview URL: tell the server so it re-maps, and refetch this record's previews.
+          fetch(`/api/releases/${item.releaseId}/previews/${item.trackIdx}/failed`, { method: 'POST' })
+            .then(() => queryClient.invalidateQueries({ queryKey: ['previews', item.releaseId] }))
+            .catch(() => {});
+        }}>
           <BrowserRouter>
             <App />
           </BrowserRouter>

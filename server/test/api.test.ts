@@ -45,6 +45,7 @@ beforeEach(async () => {
     setAlbum: (id, album) => respond(`setAlbum ${id} ${album}`),
     setNone: (id) => respond(`setNone ${id}`),
     reset: (id) => respond(`reset ${id}`),
+    markFailed: (id, idx) => { previewCalls.push(`markFailed ${id} ${idx}`); return true; },
   };
   app = buildApp({ db, scheduler, previews, dataDir: mkdtempSync(join(tmpdir(), 'vo-api-')) });
   await app.ready();
@@ -165,4 +166,9 @@ test('preview routes: 404 and 502', async () => {
   expect((await get('/api/releases/1/previews')).status).toBe(404);
   previewMode = 'down';
   expect(await get('/api/releases/7455230/previews')).toEqual({ status: 502, body: { error: "Couldn't reach Apple Music. Try again." } });
+});
+
+test('final: report a failed preview', async () => {
+  expect((await send('POST', '/api/releases/7455230/previews/3/failed', {})).status).toBe(204);
+  expect(previewCalls).toContain('markFailed 7455230 3');
 });

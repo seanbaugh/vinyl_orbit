@@ -17,6 +17,8 @@ export interface PreviewService {
   setAlbum(releaseId: number, appleAlbumId: number): Promise<PreviewInfo | null>;
   setNone(releaseId: number): Promise<PreviewInfo | null>;
   reset(releaseId: number): Promise<PreviewInfo | null>;
+  /** Marks one cached preview as broken (e.g. its URL expired) so the next get re-maps it. */
+  markFailed(releaseId: number, trackIdx: number): boolean;
 }
 
 const MAX_FALLBACK_SEARCHES = 5;
@@ -60,6 +62,12 @@ export function createPreviewService(deps: { db: Db; itunes: ItunesClient; now?:
     return !!db.prepare(`SELECT 1 FROM preview_tracks p
                          LEFT JOIN tracks t ON t.release_id = p.release_id AND t.idx = p.track_idx
                          WHERE p.release_id = ? AND (t.title IS NULL OR t.title != p.track_title) LIMIT 1`).get(id);
+  }
+
+  /** An 'unmatched' result recorded before the latest Discogs detail sync may have been based on an old tracklist. */
+  function unmatchedOutdated(id: number): boolean {
+    return !!db.prepare(`SELECT 1 FROM preview_matches m JOIN releases r ON r.id = m.release_id
+                         WHERE m.release_id = ? AND r.detail_synced_at IS NOT NULL AND m.matched_at < r.detail_synced_at`).get(id);
   }
 
   function write(id: number, input: MatchInput, result: MatchResult): PreviewInfo {
@@ -120,7 +128,11 @@ export function createPreviewService(deps: { db: Db; itunes: ItunesClient; now?:
     const input = loadInput(id);
     if (!input) return null;
     const existing = read(id);
-    if (existing && (existing.status === 'none' || existing.status === 'unmatched' || !isStale(id))) return existing;
+    // No tracklist yet (detail sync pending): answer without caching, so a real match happens once tracks arrive.
+    if (!input.tracks.length) return existing ?? { status: 'unmatched', album: null, tracks: {}, matchedAt: now() };
+    if (existing?.status === 'none') return existing;
+    if (existing?.status === 'unmatched' && !unmatchedOutdated(id)) return existing;
+    if (existing && existing.status !== 'unmatched' && !isStale(id)) return existing;
     if (existing?.status === 'manual' && existing.album) {
       const albumId = existing.album.id;
       return write(id, input, await guarded(() => manualMatch(input, albumId)));
@@ -160,6 +172,10 @@ export function createPreviewService(deps: { db: Db; itunes: ItunesClient; now?:
       const input = loadInput(id);
       if (!input) return null;
       return write(id, input, { status: 'none', album: null, tracks: new Map() });
+    },
+    markFailed(id, trackIdx) {
+      // An empty stored title never equals the Discogs title, so isStale() triggers a re-map.
+      return db.prepare("UPDATE preview_tracks SET track_title = '' WHERE release_id = ? AND track_idx = ?").run(id, trackIdx).changes > 0;
     },
     async reset(id) {
       const input = loadInput(id);
