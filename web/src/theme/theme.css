@@ -524,10 +524,10 @@ table.data td.clip { max-width: 260px; overflow: hidden; text-overflow: ellipsis
 /* ------------------------------------------------------------------ spinning now (full-screen, TV-friendly) */
 /* Display serif from the system (Didot/Bodoni ship with macOS and iOS) so the TV view needs no web font download. */
 .spinning-now {
-  --stage: min(58vh, 34vw);
+  --stage: min(80vh, 44vw);
   --display: "Bodoni 72", "Bodoni MT", Didot, "Playfair Display", "Iowan Old Style", Georgia, serif;
   position: fixed; inset: 0; z-index: 200; display: flex; flex-direction: row; align-items: center; justify-content: center;
-  gap: 4vw; padding: 0 6vw; background: #0b0b0b; color: #fff; overflow: hidden;
+  gap: 3vw; padding: 0 4vw; background: #0b0b0b; color: #fff; overflow: hidden;
 }
 .spinning-now-bg {
   position: absolute; inset: -10%; background-size: cover; background-position: center;
@@ -542,25 +542,25 @@ table.data td.clip { max-width: 260px; overflow: hidden; text-overflow: ellipsis
 .spinning-now-stage { position: relative; z-index: 1; flex: none; width: var(--stage); margin-right: calc(var(--stage) * 0.38); }
 .spinning-now .cover-disc { --disc-out: 38%; }
 .spinning-now .cover-disc-sleeve { cursor: default; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55); }
-.spinning-now-meta { position: relative; z-index: 1; flex: 0 1 34vw; min-width: 0; text-align: left; animation: spinning-now-fade 0.6s ease; }
+.spinning-now-meta { position: relative; z-index: 1; flex: 1 1 0; max-width: 30vw; min-width: 0; text-align: left; overflow-wrap: anywhere; animation: spinning-now-fade 0.6s ease; }
 .spinning-now-meta h1 {
-  margin: 0; font-family: var(--display); font-size: clamp(32px, 4.6vw, 80px); font-weight: 500; line-height: 1.04; letter-spacing: -0.01em;
+  margin: 0; font-family: var(--display); font-size: clamp(28px, 3.5vw, 64px); font-weight: 500; line-height: 1.06; letter-spacing: -0.01em;
   text-wrap: balance; text-shadow: 0 2px 24px rgba(0, 0, 0, 0.45);
 }
-.spinning-now-album { margin: 0.7em 0 0; font-family: var(--display); font-style: italic; font-size: clamp(18px, 2.3vw, 40px); color: rgba(255, 255, 255, 0.82); }
+.spinning-now-album { margin: 0.7em 0 0; font-family: var(--display); font-style: italic; font-size: clamp(16px, 1.8vw, 32px); color: rgba(255, 255, 255, 0.82); }
 .spinning-now-artist {
   margin: 1.1em 0 0; font-size: clamp(12px, 1.25vw, 20px); font-weight: 500; letter-spacing: 0.26em; text-transform: uppercase;
   color: color-mix(in srgb, var(--accent) 55%, #fff);
 }
-.spinning-now-progress { width: min(26vw, 420px); height: 3px; margin-top: 4.5vh; border-radius: 2px; background: rgba(255, 255, 255, 0.2); overflow: hidden; }
+.spinning-now-progress { width: 100%; max-width: 360px; height: 3px; margin-top: 4.5vh; border-radius: 2px; background: rgba(255, 255, 255, 0.2); overflow: hidden; }
 .spinning-now-progress > div { height: 100%; background: var(--accent); }
 .spinning-now-count { display: block; margin-top: 1vh; font-size: clamp(12px, 1.1vw, 17px); letter-spacing: 0.12em; color: rgba(255, 255, 255, 0.5); }
 @keyframes spinning-now-fade { from { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .spinning-now-meta { animation: none; } }
 /* Portrait screens: stack art above the info */
 @media (max-aspect-ratio: 1/1) {
-  .spinning-now { --stage: min(52vw, 36vh); flex-direction: column; gap: 5vh; padding: 8vh 6vw 0; justify-content: flex-start; }
-  .spinning-now-meta { flex: none; width: 88vw; text-align: center; }
+  .spinning-now { --stage: min(70vw, 46vh); flex-direction: column; gap: 5vh; padding: 8vh 6vw 0; justify-content: flex-start; }
+  .spinning-now-meta { flex: none; width: 88vw; max-width: none; text-align: center; }
   .spinning-now-progress { margin-left: auto; margin-right: auto; }
 }
 .spinning-now-controls {
