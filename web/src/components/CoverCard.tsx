@@ -1,12 +1,13 @@
 import type { ReleaseListItem } from '@api/api-types';
 import { Link } from 'react-router-dom';
+import { formatClass } from '../lib/formats';
 import { CoverImage } from './CoverImage';
 
 export function CoverCard({ item, showMeta = true }: { item: ReleaseListItem; showMeta?: boolean }) {
   return (
     <Link to={`/release/${item.id}`} className="cover-card" data-id={item.id} title={`${item.artists} — ${item.title}`}>
       <CoverImage src={item.coverUrl} alt={`${item.artists} — ${item.title}`}>
-        <span className="format-badge">{item.formatSummary}</span>
+        <span className={`format-badge ${formatClass(item.formatSummary)}`}>{item.formatSummary}</span>
         {item.copies > 1 && <span className="copies-badge">×{item.copies}</span>}
       </CoverImage>
       {showMeta && (

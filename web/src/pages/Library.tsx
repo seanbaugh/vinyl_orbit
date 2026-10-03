@@ -8,6 +8,7 @@ import { CoverCard } from '../components/CoverCard';
 import { CoverImage } from '../components/CoverImage';
 import { ActiveFilters, FilterBar } from '../components/FilterBar';
 import { fmtDate, fmtMoney } from '../lib/format';
+import { formatClass } from '../lib/formats';
 import { apiQuery, azKey, parseQuery, toSearchParams, type LibraryQuery } from '../lib/query';
 
 export function Library() {
@@ -72,7 +73,7 @@ function ListView({ items }: { items: ReleaseListItem[] }) {
           <CoverImage src={it.coverUrl} alt={it.title} />
           <div className="grow">
             <div style={{ fontWeight: 600 }} className="ellipsis">{it.title}</div>
-            <div className="muted ellipsis">{it.artists}{it.year ? ` · ${it.year}` : ''} · {it.formatSummary}</div>
+            <div className="muted ellipsis">{it.artists}{it.year ? ` · ${it.year}` : ''} <span className={formatClass(it.formatSummary)}>{it.formatSummary}</span></div>
           </div>
           <div className="row wrap" style={{ justifyContent: 'flex-end', maxWidth: '40%' }}>
             {it.tags.map((t) => <span key={t.id} className="chip">{t.name}</span>)}
@@ -111,7 +112,7 @@ function TableView({ items, q, onSort }: { items: ReleaseListItem[]; q: LibraryQ
               <td className="clip" title={it.artists}>{it.artists}</td>
               <td className="clip" style={{ fontWeight: 600 }} title={it.title}>{it.title}</td>
               <td className="num">{it.year ?? '—'}</td>
-              <td>{it.formatSummary}</td>
+              <td><span className={formatClass(it.formatSummary)}>{it.formatSummary}</span></td>
               <td className="clip">{it.labels[0]?.name ?? "—"}</td>
               <td className="muted">{it.labels[0]?.catno ?? ''}</td>
               <td className="num">{it.playCount || ''}</td>

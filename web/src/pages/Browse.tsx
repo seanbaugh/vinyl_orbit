@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import type { Facet, Facets } from '@api/api-types';
 import { useFacets } from '../api/hooks';
+import { formatClass } from '../lib/formats';
 
 const FACETS: Record<string, { title: string; key: keyof Facets; param: string; cloud: boolean }> = {
   artists: { title: 'Artists', key: 'artists', param: 'artist', cloud: false },
@@ -42,6 +43,7 @@ export function Browse() {
           {values.map((v) => (
             <Link key={v.value} to={href(v.value)} className="chip"
               style={{ fontSize: 12 + Math.round((v.count / max) * 8), height: 'auto', padding: '6px 14px' }}>
+              {cfg.key === 'formats' && <span className={`fmt-dot ${formatClass(v.value)}`} />}
               {label(v.value)} <span className="muted">{v.count}</span>
             </Link>
           ))}

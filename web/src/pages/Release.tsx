@@ -14,6 +14,7 @@ import { CrateMenu } from '../components/CrateMenu';
 import { Lightbox } from '../components/Lightbox';
 import { TagEditor } from '../components/TagEditor';
 import { createAutosaver } from '../lib/autosave';
+import { formatClass } from '../lib/formats';
 import { fmtDate, fmtInt, fmtMoney, fmtRelative, fmtSeconds, localToday } from '../lib/format';
 
 const TABS = ['tracks', 'notes', 'history', 'details'] as const;
@@ -60,7 +61,7 @@ export function Release() {
                   {label.catno && label.catno !== 'none' ? ` · ${label.catno}` : ''}
                 </span>
               )}
-              <span>{r.formatSummary}</span>
+              <span className={formatClass(r.formatSummary)}>{r.formatSummary}</span>
               {r.year && <Link className="link" to={`/library?decade=${Math.floor(r.year / 10) * 10}`}>{r.year}</Link>}
               {r.country && <span>{r.country}</span>}
               {r.copies > 1 && <span>{r.copies} copies</span>}

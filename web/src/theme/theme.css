@@ -219,10 +219,21 @@ a.chip:hover, button.chip:hover { border-color: var(--border-strong); }
 .cover-card { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .cover-card .cover { transition: transform 0.15s, box-shadow 0.15s; }
 .cover-card:hover .cover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35); }
-.format-badge {
-  position: absolute; right: 6px; bottom: 6px; font-size: 10px; font-weight: 700; letter-spacing: 0.03em;
-  padding: 2px 6px; border-radius: 4px; background: color-mix(in srgb, var(--accent) 85%, black); color: #fff;
+.format-badge { position: absolute; right: 6px; bottom: 6px; }
+
+/* Format colour families (fixed, independent of the accent; white text ≥ 4.5:1) */
+.fmt {
+  display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.03em; line-height: 1.5;
+  padding: 1px 6px; border-radius: 4px; color: #fff; background: var(--fmt, #5f6b7a); white-space: nowrap;
 }
+.fmt-lp { --fmt: #4f5fd1; }
+.fmt-cd { --fmt: #5f6b7a; }
+.fmt-ep { --fmt: #a8661a; }
+.fmt-single { --fmt: #c2405f; }
+.fmt-cassette { --fmt: #2f7f57; }
+.fmt-box { --fmt: #7a45c8; }
+.fmt-other { --fmt: #4b5563; }
+.fmt-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--fmt); padding: 0; }
 .copies-badge {
   position: absolute; left: 6px; top: 6px; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;
   background: rgba(0, 0, 0, 0.7); color: #fff;
