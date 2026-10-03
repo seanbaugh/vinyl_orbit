@@ -1,0 +1,12 @@
+
+
+
+{
+ "resultCount":2,
+ "results": [
+{"wrapperType":"collection", "collectionType":"Album", "artistId":326646632, "collectionId":1365674814, "amgArtistId":584345, "artistName":"Sleeping At Last", "collectionName":"Atlas: Four - Single", "collectionCensoredName":"Atlas: Four - Single", "artistViewUrl":"https://music.apple.com/us/artist/sleeping-at-last/326646632?uo=4", "collectionViewUrl":"https://music.apple.com/us/album/atlas-four-single/1365674814?uo=4", "artworkUrl60":"https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/1f/67/1f/1f671f97-1297-dfb9-3c57-2831576be4e7/859726041152_cover.jpg/60x60bb.jpg", "artworkUrl100":"https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/1f/67/1f/1f671f97-1297-dfb9-3c57-2831576be4e7/859726041152_cover.jpg/100x100bb.jpg", "collectionPrice":0.99, "collectionExplicitness":"notExplicit", "trackCount":1, "copyright":"℗ 2018 Asteroid B-612", "country":"USA", "currency":"USD", "releaseDate":"2018-04-13T07:00:00Z", "primaryGenreName":"Singer/Songwriter"}, 
+{"wrapperType":"track", "kind":"song", "artistId":326646632, "collectionId":1365674814, "trackId":1365674821, "artistName":"Sleeping At Last", "collectionName":"Atlas: Four - Single", "trackName":"Atlas: Four", "collectionCensoredName":"Atlas: Four - Single", "trackCensoredName":"Atlas: Four", "artistViewUrl":"https://music.apple.com/us/artist/sleeping-at-last/326646632?uo=4", "collectionViewUrl":"https://music.apple.com/us/album/atlas-four/1365674814?i=1365674821&uo=4", "trackViewUrl":"https://music.apple.com/us/album/atlas-four/1365674814?i=1365674821&uo=4", 
+"previewUrl":"https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview115/v4/27/fd/19/27fd198c-dc13-3f79-5739-be0fda2ec594/mzaf_1647181162580486745.plus.aac.p.m4a", "artworkUrl30":"https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/1f/67/1f/1f671f97-1297-dfb9-3c57-2831576be4e7/859726041152_cover.jpg/30x30bb.jpg", "artworkUrl60":"https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/1f/67/1f/1f671f97-1297-dfb9-3c57-2831576be4e7/859726041152_cover.jpg/60x60bb.jpg", "artworkUrl100":"https://is1-ssl.mzstatic.com/image/thumb/Music118/v4/1f/67/1f/1f671f97-1297-dfb9-3c57-2831576be4e7/859726041152_cover.jpg/100x100bb.jpg", "collectionPrice":0.99, "trackPrice":0.99, "releaseDate":"2018-04-13T12:00:00Z", "collectionExplicitness":"notExplicit", "trackExplicitness":"notExplicit", "discCount":1, "discNumber":1, "trackCount":1, "trackNumber":1, "trackTimeMillis":294179, "country":"USA", "currency":"USD", "primaryGenreName":"Singer/Songwriter", "isStreamable":true}]
+}
+
+
