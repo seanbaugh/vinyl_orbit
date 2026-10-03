@@ -4,22 +4,102 @@ A self-hosted browser for your public Discogs collection: a cover-grid library w
 
 Everything runs in one Docker container: a Node/Fastify server that syncs from the Discogs API into SQLite and serves a React app on port **3020**.
 
-## Deploy on the Docker host
+## Install on your Docker machine (step by step)
+
+Everything below is typed on the machine that runs Docker (e.g. over SSH). It takes about 5 minutes plus a few minutes for the first sync.
+
+### 1. Check the machine has Docker and Git
 
 ```bash
-git clone <this repo> vinyl-orbit    # or copy the folder over
-cd vinyl-orbit
-cp .env.example .env                 # set DISCOGS_USERNAME if it isn't seanmikel
+docker --version
+docker compose version
+git --version
+```
+
+Each should print a version. If `docker compose version` fails, install the Docker Compose plugin (on most Linux distros: `sudo apt install docker-compose-plugin`). If `git` is missing: `sudo apt install git`. If Docker commands say *permission denied*, either put `sudo` in front of them or add yourself to the docker group (`sudo usermod -aG docker $USER`, then log out and back in).
+
+### 2. Download Vinyl Orbit
+
+Pick a folder to keep it in (your home folder is fine), then:
+
+```bash
+cd ~
+git clone https://github.com/seanbaugh/vinyl_orbit.git
+cd vinyl_orbit
+```
+
+All remaining commands are run from inside this `vinyl_orbit` folder.
+
+### 3. Create your settings file
+
+```bash
+cp .env.example .env
+nano .env
+```
+
+Check these lines, save with **Ctrl+O, Enter**, and exit with **Ctrl+X**:
+
+- `DISCOGS_USERNAME=seanmikel` — the Discogs account to show (must have a public collection).
+- `TZ=America/Los_Angeles` — your time zone ([list of names](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones), e.g. `America/New_York`, `Europe/London`).
+- Leave everything else as is. `DISCOGS_TOKEN` is optional (it only makes syncing faster).
+
+### 4. Build and start it
+
+```bash
 docker compose up -d --build
 ```
 
-Open `http://<docker-host>:3020` (to use another port, change the left side of `ports:` in `docker-compose.yml`). The first sync runs on startup and takes about 4 minutes for ~100 records (Discogs allows ~25 requests/minute without a token). Covers appear as they're cached.
+The first build downloads and compiles everything and takes a few minutes. When it finishes, check it's running:
 
-**Update:** `git pull && docker compose up -d --build`
+```bash
+docker compose ps
+```
 
-**Back up:** copy the `data/` folder (the database is `data/library.db`; `data/images/` is a re-downloadable cache). Your notes, tags, crates and plays live only in `library.db`.
+The `vinyl-orbit` row should say `Up` (after ~30 seconds it also says `healthy`).
 
-**Logs:** `docker compose logs -f vinyl-orbit`
+### 5. Open it
+
+Find the machine's IP address:
+
+```bash
+hostname -I
+```
+
+(On a Mac host use `ipconfig getifaddr en0` instead.) Use the first address shown (e.g. `192.168.1.217`) and open **`http://<that-address>:3020`** in a browser on any device on your network.
+
+The first sync starts automatically: records appear within a minute, and tracklists, prices and covers fill in over about 4–5 minutes for ~100 records. Progress is shown at the bottom of the sidebar.
+
+### Everyday commands (run inside the `vinyl_orbit` folder)
+
+| What | Command |
+|---|---|
+| See the logs | `docker compose logs -f vinyl-orbit` (Ctrl+C to stop watching) |
+| Stop | `docker compose down` |
+| Start again | `docker compose up -d` |
+| Update to the latest version | `git pull && docker compose up -d --build` |
+| Restart | `docker compose restart` |
+
+It restarts automatically after a reboot (`restart: unless-stopped`).
+
+### Your data and backups
+
+Everything lives in the `data/` folder next to `docker-compose.yml`:
+
+- `data/library.db` — your notes, tags, crates, plays, preview matches **and** the synced Discogs data. **This is the file to back up.**
+- `data/images/` — cached cover art (re-downloaded automatically if lost).
+
+Back up: `cp data/library.db ~/library-backup-$(date +%F).db` (safest while stopped: `docker compose down` first, then `docker compose up -d`).
+Restore: stop it, copy the backup over `data/library.db`, start it.
+
+Updating with `git pull` never touches `data/`.
+
+### Troubleshooting
+
+- **Page doesn't load** — run `docker compose ps` (is it `Up`?) and `docker compose logs --tail 50 vinyl-orbit`. Make sure you used `http://` (not https) and port `3020`.
+- **"port is already allocated"** — something else uses 3020. Edit `docker-compose.yml`, change `"3020:3020"` to e.g. `"3030:3020"`, run `docker compose up -d`, and open port 3030 instead.
+- **No records after a few minutes** — check `DISCOGS_USERNAME` in `.env` and that the collection is public on Discogs; after editing `.env`, run `docker compose up -d` to apply it. The sidebar shows the last sync error.
+- **"Previews unavailable right now"** — Apple Music didn't answer; click Retry a minute later.
+- **Build fails on a Raspberry Pi / ARM** — make sure you're on a 64-bit OS; the build compiles a small native module and needs ~1 GB of free RAM.
 
 ## Configuration (`.env`)
 

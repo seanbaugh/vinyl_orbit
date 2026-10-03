@@ -25,7 +25,7 @@ test('collection page URL and headers without token', async () => {
   expect(calls[0].url).toBe(
     'https://api.discogs.com/users/seanmikel/collection/folders/0/releases?page=2&per_page=100&sort=added&sort_order=desc',
   );
-  expect(calls[0].headers.get('User-Agent')).toBe('VinylOrbit/1.0 +https://github.com/seanmikel/vinyl-orbit');
+  expect(calls[0].headers.get('User-Agent')).toBe('VinylOrbit/1.0 +https://github.com/seanbaugh/vinyl_orbit');
   expect(calls[0].headers.get('Authorization')).toBeNull();
 });
 

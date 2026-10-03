@@ -3,7 +3,7 @@ import { RateLimiter, realClock } from './rateLimiter.js';
 import type { CollectionPage, DiscogsRelease } from './types.js';
 
 const API = 'https://api.discogs.com';
-export const USER_AGENT = 'VinylOrbit/1.0 +https://github.com/seanmikel/vinyl-orbit';
+export const USER_AGENT = 'VinylOrbit/1.0 +https://github.com/seanbaugh/vinyl_orbit';
 
 export class DiscogsError extends Error {
   constructor(message: string, public readonly status: number) {
