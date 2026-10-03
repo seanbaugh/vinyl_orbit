@@ -1,5 +1,6 @@
 import { Disc3 } from 'lucide-react';
 import { useEffect } from 'react';
+import { useRelease } from '../api/hooks';
 import { useNowSpinning } from '../lib/nowSpinning';
 import { usePlayer } from '../player/PlayerProvider';
 
@@ -23,8 +24,12 @@ export function SpinningNowButton() {
 
 /** ⌘⇧S toggles the view (when there is something to show); it also closes itself once nothing is left to show. */
 export function useSpinningNowShortcut(): void {
-  const { open, setOpen } = useNowSpinning();
+  const { open, setOpen, releaseId, clear } = useNowSpinning();
   const has = useHasSpinSource();
+
+  // A marked record that can't be loaded (e.g. the library was reset) would leave an unclearable button.
+  const markedError = useRelease(releaseId ?? 0).error;
+  useEffect(() => { if (markedError && releaseId !== null) clear(); }, [markedError, releaseId, clear]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

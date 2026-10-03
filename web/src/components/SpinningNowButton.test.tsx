@@ -3,6 +3,8 @@ import { act, cleanup, render } from '@testing-library/react';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { NowSpinningProvider, useNowSpinning } from '../lib/nowSpinning';
 import { PlayerProvider, usePlayer } from '../player/PlayerProvider';
+const useReleaseMock = vi.hoisted(() => vi.fn());
+vi.mock('../api/hooks', () => ({ useRelease: useReleaseMock }));
 import { SpinningNowButton, useSpinningNowShortcut } from './SpinningNowButton';
 
 class FakeAudio extends EventTarget {
@@ -27,7 +29,11 @@ function setup() {
 const chord = () => act(() => { window.dispatchEvent(new KeyboardEvent('keydown', { key: 's', metaKey: true, shiftKey: true })); });
 
 afterEach(cleanup);
-beforeEach(() => localStorage.clear());
+beforeEach(() => {
+  localStorage.clear();
+  useReleaseMock.mockReset();
+  useReleaseMock.mockReturnValue({ data: undefined });
+});
 
 test('hidden with no source', () => {
   expect(setup().view.queryByRole('button', { name: /Spinning now/ })).toBeNull();
@@ -64,4 +70,12 @@ test('the overlay closes when the last source goes away', async () => {
   expect(h.ns.open).toBe(true);
   await act(async () => h.player.stop());
   expect(h.ns.open).toBe(false);
+});
+
+test('a marked record that cannot be loaded is cleared so the button does not get stuck', () => {
+  useReleaseMock.mockReturnValue({ data: undefined, error: new Error('404') });
+  const { h, view } = setup();
+  act(() => h.ns.set(3));
+  expect(h.ns.releaseId).toBeNull();
+  expect(view.queryByRole('button', { name: /Spinning now/ })).toBeNull();
 });

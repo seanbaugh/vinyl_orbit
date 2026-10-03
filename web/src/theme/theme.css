@@ -348,7 +348,7 @@ table.data .num { text-align: right; font-variant-numeric: tabular-nums; }
 .palette-item .cover { width: 34px; flex-shrink: 0; box-shadow: none; }
 
 .toast {
-  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 200; padding: 10px 16px;
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 210; padding: 10px 16px;
   background: var(--surface-3); border: 1px solid var(--border-strong); border-radius: 999px; box-shadow: var(--shadow);
 }
 
@@ -546,5 +546,6 @@ table.data td.clip { max-width: 260px; overflow: hidden; text-overflow: ellipsis
   position: absolute; z-index: 2; bottom: 4vh; left: 50%; transform: translateX(-50%); display: flex; gap: 12px;
   padding: 6px 10px; border-radius: 999px; background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(10px); transition: opacity 0.4s ease;
 }
+.spinning-now:focus { outline: none; }
 .spinning-now.idle { cursor: none; }
 .spinning-now.idle .spinning-now-controls { opacity: 0; pointer-events: none; }

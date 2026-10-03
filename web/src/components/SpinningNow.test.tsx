@@ -234,3 +234,24 @@ test('controls go idle after 3s and return on pointermove', async () => {
     vi.useRealTimers();
   }
 });
+
+test('Space toggles even when the button that opened the overlay still has focus', async () => {
+  stubBrowser();
+  const opener = document.createElement('button');
+  document.body.appendChild(opener);
+  opener.focus();
+  const { h, audio } = setup();
+  await act(async () => h.player.play([item(1)], 0));
+  await act(async () => audio.fire('playing'));
+  act(() => { document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true })); });
+  expect(h.player.state.status).toBe('paused');
+  opener.remove();
+});
+
+test('keeps the marked record loaded while a preview plays, so the fallback is ready when it ends', async () => {
+  useReleaseMock.mockReturnValue(marked());
+  const { h } = setup();
+  act(() => h.ns.set(5));
+  await act(async () => h.player.play([item(1)], 0));
+  expect(useReleaseMock).toHaveBeenLastCalledWith(5);
+});

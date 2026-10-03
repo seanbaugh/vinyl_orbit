@@ -23,7 +23,7 @@ export function useSpinSource(): SpinSource | null {
   const player = usePlayer();
   const { releaseId } = useNowSpinning();
   const current = player.current;
-  const marked = useRelease(current ? 0 : releaseId ?? 0).data;
+  const marked = useRelease(releaseId ?? 0).data;
 
   if (current) {
     return {
@@ -53,6 +53,8 @@ function Overlay({ src, onClose }: { src: SpinSource; onClose: () => void }) {
   const player = usePlayer();
   const { clear } = useNowSpinning();
   const [idle, setIdle] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  useEffect(() => rootRef.current?.focus({ preventScroll: true }), []);
   const isPreview = src.kind === 'preview';
   const playing = player.state.status === 'playing' || player.state.status === 'loading';
 
@@ -111,7 +113,7 @@ function Overlay({ src, onClose }: { src: SpinSource; onClose: () => void }) {
   }, []);
 
   return (
-    <div className={`spinning-now${idle ? ' idle' : ''}`} role="dialog" aria-label="Spinning now">
+    <div ref={rootRef} tabIndex={-1} className={`spinning-now${idle ? ' idle' : ''}`} role="dialog" aria-label="Spinning now">
       {src.coverUrl && <div className="spinning-now-bg" style={{ backgroundImage: `url(${JSON.stringify(src.coverUrl)})` }} aria-hidden="true" />}
       <div className="spinning-now-stage">
         <CoverDisc coverUrl={src.coverUrl} alt={src.subline} spinning={src.spinning} kind={src.discKind} />
