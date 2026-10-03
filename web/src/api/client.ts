@@ -10,7 +10,7 @@ function withParams(path: string, params?: Params): string {
   return qs ? `${path}?${qs}` : path;
 }
 
-async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+export async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
   const res = await fetch(path, {
     method,
     headers: body !== undefined ? { 'Content-Type': 'application/json' } : undefined,

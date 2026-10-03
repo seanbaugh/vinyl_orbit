@@ -4,8 +4,11 @@ import { ExternalLink, Play as PlayIcon, Star, Trash2 } from 'lucide-react';
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { Line, LineChart, ResponsiveContainer, Tooltip, YAxis } from 'recharts';
-import type { ReleaseDetail } from '@api/api-types';
-import { useAddPlay, useDeletePlay, useRelease, useSaveNote } from '../api/hooks';
+import type { PreviewInfo, ReleaseDetail } from '@api/api-types';
+import { useAddPlay, useDeletePlay, usePreviews, useRelease, useSaveNote } from '../api/hooks';
+import { PreviewBar } from '../components/PreviewBar';
+import { usePlayer } from '../player/PlayerProvider';
+import type { QueueItem } from '../player/queue';
 import { CoverImage } from '../components/CoverImage';
 import { CrateMenu } from '../components/CrateMenu';
 import { Lightbox } from '../components/Lightbox';
@@ -107,32 +110,68 @@ export function Release() {
   );
 }
 
+/** Matched tracks of a record, in running order, as a player queue. */
+function queueFor(r: ReleaseDetail, info: PreviewInfo | undefined): QueueItem[] {
+  if (!info || info.status === 'none') return [];
+  return r.sides.flatMap((s) => s.tracks)
+    .filter((t) => t.type !== 'heading' && info.tracks[t.idx])
+    .map((t) => ({
+      releaseId: r.id, trackIdx: t.idx, title: t.title, artists: t.artists || r.artists, releaseTitle: r.title,
+      coverUrl: r.coverUrl, previewUrl: info.tracks[t.idx].previewUrl,
+    }));
+}
+
 function Tracks({ r }: { r: ReleaseDetail }) {
+  const previews = usePreviews(r.id);
+  const player = usePlayer();
   if (!r.detailSyncedAt) return <div className="muted">The tracklist will appear after the next sync.</div>;
   if (!r.sides.length) return <div className="muted">Discogs has no tracklist for this release.</div>;
+
+  const info = previews.data;
+  const queue = queueFor(r, info);
+  const playFrom = (trackIdx: number) => player.play(queue, Math.max(0, queue.findIndex((q) => q.trackIdx === trackIdx)));
+
   return (
     <>
+      <PreviewBar r={r} info={info} loading={previews.isLoading} error={previews.error as Error | null}
+        onRetry={() => previews.refetch()} onPreviewAlbum={() => player.play(queue, 0)} />
       {r.sides.map((s, i) => (
         <div key={i} className="side-card">
           <div className="side-head">
             <span>{s.side ? (s.side.startsWith('Disc') ? s.side : `Side ${s.side}`) : 'Tracks'}</span>
             {s.totalSeconds !== null && <span className="muted">{fmtSeconds(s.totalSeconds)}</span>}
           </div>
-          {s.tracks.map((t, j) =>
-            t.type === 'heading' ? (
-              <div key={j} className="track-heading">{t.title}</div>
-            ) : (
-              <div key={j} className="track">
+          {s.tracks.map((t, j) => {
+            if (t.type === 'heading') return <div key={j} className="track-heading">{t.title}</div>;
+            const preview = info && info.status !== 'none' ? info.tracks[t.idx] : undefined;
+            const current = player.isCurrent(r.id, t.idx);
+            const playing = current && (player.state.status === 'playing' || player.state.status === 'loading');
+            return (
+              <div key={j} className={`track has-play${current ? ' current' : ''}`}>
+                <span className="play-slot">
+                  {preview && (
+                    <button className="track-play" aria-label={`${playing ? 'Pause' : 'Play'} preview of ${t.title}`}
+                      onClick={() => (current ? player.toggle() : playFrom(t.idx))}>
+                      {playing ? <span className="eq" aria-hidden="true"><i /><i /><i /></span> : <PlayIcon />}
+                    </button>
+                  )}
+                </span>
                 <span className="pos">{t.position}</span>
                 <div style={{ minWidth: 0 }}>
-                  <div>{t.title}</div>
+                  <div className="row" style={{ gap: 6 }}>
+                    <span>{t.title}</span>
+                    {preview?.url && (
+                      <a className="track-apple" href={preview.url} target="_blank" rel="noreferrer"
+                        aria-label={`Listen to ${t.title} on Apple Music`} title="Listen on Apple Music"><ExternalLink size={12} /></a>
+                    )}
+                  </div>
                   {t.artists && <div className="muted" style={{ fontSize: 12 }}>{t.artists}</div>}
                   {t.credits && <div className="credits">{t.credits}</div>}
                 </div>
                 <span className="dur">{t.duration}</span>
               </div>
-            ),
-          )}
+            );
+          })}
         </div>
       ))}
     </>

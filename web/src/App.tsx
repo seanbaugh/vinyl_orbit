@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import { CommandPalette } from './components/CommandPalette';
+import { MiniPlayer } from './components/MiniPlayer';
+import { usePlayer } from './player/PlayerProvider';
 import { Sidebar } from './components/Sidebar';
 import { TopBar } from './components/TopBar';
 import { KeyedByParam } from './lib/routing';
@@ -16,6 +18,7 @@ export function App() {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const location = useLocation();
   const contentRef = useRef<HTMLDivElement>(null);
+  const player = usePlayer();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -38,7 +41,7 @@ export function App() {
       <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
       <div className="main">
         <TopBar onMenu={() => setMenuOpen(true)} onSearch={() => setPaletteOpen(true)} />
-        <div className="content" ref={contentRef} id="content">
+        <div className={`content${player.current ? ' with-player' : ''}`} ref={contentRef} id="content">
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/library" element={<Library />} />
@@ -50,6 +53,7 @@ export function App() {
           </Routes>
         </div>
       </div>
+      <MiniPlayer />
       {paletteOpen && <CommandPalette onClose={() => setPaletteOpen(false)} />}
     </div>
   );

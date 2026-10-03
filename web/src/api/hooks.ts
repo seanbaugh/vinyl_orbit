@@ -1,10 +1,11 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
-  Crate, Dashboard, Facets, Play, ReleaseDetail, ReleaseListItem, ReleaseQuery, SearchResults, Stats, SyncStatus, Tag,
+  Crate, Dashboard, Facets, Play, PreviewCandidate, PreviewInfo, ReleaseDetail, ReleaseListItem, ReleaseQuery, SearchResults,
+  Stats, SyncStatus, Tag,
 } from '@api/api-types';
 
 
-import { api } from './client';
+import { api, request } from './client';
 
 export type { Dashboard, SearchResults, Stats, SyncStatus };
 
@@ -132,5 +133,40 @@ export function useTriggerSync() {
   return useMutation({
     mutationFn: () => api.post<SyncStatus>('/api/sync', { full: true }),
     onSuccess: (status) => qc.setQueryData(['sync'], status),
+  });
+}
+
+// ---------------------------------------------------------------- previews
+
+export const usePreviews = (releaseId: number) =>
+  useQuery({
+    queryKey: ['previews', releaseId],
+    queryFn: () => api.get<PreviewInfo>(`/api/releases/${releaseId}/previews`),
+    retry: false,
+    staleTime: Infinity,
+  });
+
+export const usePreviewCandidates = (releaseId: number, enabled: boolean) =>
+  useQuery({
+    queryKey: ['preview-candidates', releaseId],
+    queryFn: () => api.get<PreviewCandidate[]>(`/api/releases/${releaseId}/previews/candidates`),
+    enabled,
+    staleTime: 5 * 60_000,
+  });
+
+export function useSetPreviewAlbum(releaseId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { appleAlbumId: number } | { none: true }) =>
+      api.put<PreviewInfo>(`/api/releases/${releaseId}/previews`, body),
+    onSuccess: (info) => qc.setQueryData(['previews', releaseId], info),
+  });
+}
+
+export function useResetPreviews(releaseId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => request<PreviewInfo>('DELETE', `/api/releases/${releaseId}/previews`),
+    onSuccess: (info) => qc.setQueryData(['previews', releaseId], info),
   });
 }

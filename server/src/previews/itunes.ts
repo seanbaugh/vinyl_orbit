@@ -44,7 +44,8 @@ export function createItunesClient(opts: {
   limiter?: RateLimiter;
   sleep?: (ms: number) => Promise<void>;
 }): ItunesClient {
-  const limiter = opts.limiter ?? new RateLimiter(3000); // Apple allows ~20 requests/minute
+  // Apple allows ~20 requests/minute: average 1 per 3 s, with bursts so one record matches quickly.
+  const limiter = opts.limiter ?? new RateLimiter(3000, realClock, { burst: 8 });
   const country = encodeURIComponent(opts.country);
   const get = (url: string) =>
     getJson<{ results?: Result[] }>({

@@ -25,3 +25,15 @@ test('no wait when the interval has already elapsed', async () => {
   await limiter.take();
   expect(clock.now()).toBe(5000);
 });
+
+test('burst: allows N immediate calls, then spaces by the interval, and refills while idle', async () => {
+  const clock = fakeClock();
+  const limiter = new RateLimiter(3000, clock, { burst: 3 });
+  const times: number[] = [];
+  await Promise.all([1, 2, 3, 4, 5].map(() => limiter.take().then(() => times.push(clock.now()))));
+  expect(times).toEqual([0, 0, 0, 3000, 6000]);
+  await clock.sleep(9000); // idle long enough to refill 3 tokens
+  const start = clock.now();
+  for (let i = 0; i < 3; i++) await limiter.take();
+  expect(clock.now()).toBe(start);
+});
