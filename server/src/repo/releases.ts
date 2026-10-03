@@ -278,6 +278,7 @@ export function getReleaseDetail(db: Db, id: number): ReleaseDetail | null {
 
   const tracks = (db.prepare('SELECT * FROM tracks WHERE release_id = ? ORDER BY idx').all(id) as Record<string, any>[])
     .map((t): TrackRow => ({
+      idx: t.idx,
       position: t.position,
       type: t.type,
       title: t.title,

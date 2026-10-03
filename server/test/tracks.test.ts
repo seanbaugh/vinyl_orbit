@@ -3,9 +3,9 @@ import { groupTracks, parseDuration, sideOf } from '../src/lib/tracks.js';
 import type { TrackRow } from '../src/api-types.js';
 
 const t = (position: string, duration: string): TrackRow =>
-  ({ position, type: 'track', title: `Track ${position}`, duration, artists: '', credits: '' });
+  ({ idx: 0, position, type: 'track', title: `Track ${position}`, duration, artists: '', credits: '' });
 const h = (title: string): TrackRow =>
-  ({ position: '', type: 'heading', title, duration: '', artists: '', credits: '' });
+  ({ idx: 0, position: '', type: 'heading', title, duration: '', artists: '', credits: '' });
 
 test('parseDuration', () => {
   expect(parseDuration('5:20')).toBe(320);

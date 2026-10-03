@@ -111,3 +111,26 @@ CREATE TABLE IF NOT EXISTS sync_state (
   key TEXT PRIMARY KEY,
   value TEXT NOT NULL
 );
+
+-- Apple Music preview matches (user-owned: the Discogs sync never touches these)
+CREATE TABLE IF NOT EXISTS preview_matches (
+  release_id INTEGER PRIMARY KEY,
+  status TEXT NOT NULL CHECK (status IN ('auto', 'manual', 'none', 'unmatched')),
+  apple_album_id INTEGER,
+  album_name TEXT,
+  album_artist TEXT,
+  album_url TEXT,
+  artwork_url TEXT,
+  matched_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS preview_tracks (
+  release_id INTEGER NOT NULL,
+  track_idx INTEGER NOT NULL,
+  track_title TEXT NOT NULL,
+  preview_url TEXT NOT NULL,
+  track_url TEXT,
+  apple_track_id INTEGER,
+  source TEXT NOT NULL CHECK (source IN ('album', 'search')),
+  PRIMARY KEY (release_id, track_idx)
+);

@@ -1,6 +1,8 @@
 // JSON shapes shared between server and web. Types only — no runtime imports.
 
 export interface TrackRow {
+  /** tracks.idx — stable key for previews */
+  idx: number;
   position: string;
   type: string;
   title: string;
@@ -162,4 +164,24 @@ export interface SyncStatus {
   lastCompletedAt: string | null;
   lastError: string | null;
   lastResult: SyncResult | null;
+}
+
+export type PreviewStatus = 'auto' | 'manual' | 'none' | 'unmatched';
+
+export interface PreviewInfo {
+  status: PreviewStatus;
+  album: { id: number; name: string; artist: string; url: string | null; artworkUrl: string | null } | null;
+  tracks: Record<number, { previewUrl: string; url: string | null; source: 'album' | 'search' }>;
+  matchedAt: string;
+}
+
+export interface PreviewCandidate {
+  id: number;
+  name: string;
+  artist: string;
+  year: number | null;
+  trackCount: number;
+  artworkUrl: string | null;
+  url: string | null;
+  score: number;
 }
