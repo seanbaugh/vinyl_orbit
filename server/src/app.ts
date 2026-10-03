@@ -1,5 +1,5 @@
 import fastifyStatic from '@fastify/static';
-import Fastify, { type FastifyInstance } from 'fastify';
+import Fastify, { LogController, type FastifyInstance } from 'fastify';
 import { existsSync, mkdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import type { Db } from './db/index.js';
@@ -19,7 +19,10 @@ export interface AppDeps {
 }
 
 export function buildApp(deps: AppDeps): FastifyInstance {
-  const app = Fastify({ logger: deps.logger ?? false, disableRequestLogging: true });
+  const app = Fastify({
+    logger: deps.logger ?? false,
+    logController: new LogController({ disableRequestLogging: true }),
+  });
 
   app.setErrorHandler((err: Error & { statusCode?: number }, req, reply) => {
     const status = err instanceof HttpError ? err.statusCode : err.statusCode ?? 500;
