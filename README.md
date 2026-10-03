@@ -4,6 +4,16 @@ A self-hosted browser for your public Discogs collection: a cover-grid library w
 
 Everything runs in one Docker container: a Node/Fastify server that syncs from the Discogs API into SQLite and serves a React app on port **3020**.
 
+![Vinyl Orbit library](docs/screenshots/library.jpg)
+
+## Screenshots
+
+| | |
+|---|---|
+| ![Dashboard](docs/screenshots/dashboard.jpg) **Dashboard**: collection value, recently added, and records to pull | ![Release page with mini-player](docs/screenshots/player.png) **Release page**: tracklist with Apple Music previews and a mini-player |
+| ![Search palette](docs/screenshots/search.jpg) **Search (⌘K)**: records, artists, tracks and notes | ![Collection stats](docs/screenshots/stats.png) **Stats**: decades, genres, formats and plays |
+| ![Light theme](docs/screenshots/library-light.jpg) **Light theme and accent colours** | <img src="docs/screenshots/mobile-release.jpg" alt="Mobile release page" width="220"> **Mobile**: works on phones too |
+
 ## Install on your Docker machine (step by step)
 
 Everything below is typed on the machine that runs Docker (e.g. over SSH). It takes about 5 minutes plus a few minutes for the first sync.
