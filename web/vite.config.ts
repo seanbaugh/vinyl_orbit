@@ -14,5 +14,5 @@ export default defineConfig({
       '/images': 'http://localhost:3020',
     },
   },
-  test: { include: ['src/**/*.test.ts'] },
+  test: { include: ['src/**/*.test.{ts,tsx}'] },
 });

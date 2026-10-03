@@ -90,7 +90,8 @@ export function userRoutes(app: FastifyInstance, { db }: RouteDeps) {
       note: z.string().max(1000).nullable().optional(),
     }), req.body);
     releaseExists(db, id);
-    return reply.code(201).send(addPlay(db, id, body.playedAt ?? new Date().toISOString(), body.note ?? null));
+    const playedAt = (body.playedAt ? new Date(body.playedAt) : new Date()).toISOString(); // store UTC so string comparisons hold
+    return reply.code(201).send(addPlay(db, id, playedAt, body.note ?? null));
   });
   app.delete('/api/plays/:id', async (req, reply) => {
     const { id } = parse(idParam, req.params);

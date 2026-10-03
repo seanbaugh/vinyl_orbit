@@ -3,6 +3,7 @@ import { Route, Routes, useLocation } from 'react-router-dom';
 import { CommandPalette } from './components/CommandPalette';
 import { Sidebar } from './components/Sidebar';
 import { TopBar } from './components/TopBar';
+import { KeyedByParam } from './lib/routing';
 import { Browse } from './pages/Browse';
 import { CratePage } from './pages/Crate';
 import { Dashboard } from './pages/Dashboard';
@@ -41,7 +42,7 @@ export function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/library" element={<Library />} />
-            <Route path="/release/:id" element={<Release />} />
+            <Route path="/release/:id" element={<KeyedByParam param="id" render={() => <Release />} />} />
             <Route path="/browse/:facet" element={<Browse />} />
             <Route path="/crate/:id" element={<CratePage />} />
             <Route path="/stats" element={<Stats />} />

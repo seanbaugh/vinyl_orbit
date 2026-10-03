@@ -1,9 +1,11 @@
+import { existsSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { SyncProgress, SyncResult } from '../api-types.js';
 import type { Config } from '../config.js';
 import type { Db } from '../db/index.js';
 import type { DiscogsClient } from '../discogs/client.js';
+import type { CollectionItem } from '../discogs/types.js';
 import {
   applyDetail, imagesMissingLocal, markRemoved, releasesNeedingDetail, setImageLocalPath, upsertBasic,
 } from '../repo/releases.js';
@@ -33,13 +35,16 @@ export async function runSync(deps: SyncDeps, opts: { full: boolean }): Promise<
   let collectionOk = true;
   progress({ phase: 'collection', done: 0, total: 0 });
   try {
+    // Gather every page before writing: copies of one release can sit on different pages.
+    const items: CollectionItem[] = [];
     for (let page = 1, pages = 1; page <= pages; page++) {
       const res = await client.getCollectionPage(page);
       pages = res.pagination.pages;
-      upsertBasic(db, res.releases, now());
-      seen.push(...res.releases.map((r) => r.basic_information.id));
-      progress({ phase: 'collection', done: seen.length, total: res.pagination.items });
+      items.push(...res.releases);
+      progress({ phase: 'collection', done: items.length, total: res.pagination.items });
     }
+    upsertBasic(db, items, now());
+    seen.push(...items.map((r) => r.basic_information.id));
   } catch (e) {
     collectionOk = false;
     result.errors.push(`Collection: ${errMsg(e)}`);
@@ -67,7 +72,7 @@ export async function runSync(deps: SyncDeps, opts: { full: boolean }): Promise<
   }
 
   // 3. Image cache
-  const images = imagesMissingLocal(db);
+  const images = imagesMissingLocal(db, (p) => existsSync(join(config.dataDir, p)));
   let done = 0;
   progress({ phase: 'images', done: 0, total: images.length });
   const queue = [...images];

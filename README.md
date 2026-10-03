@@ -13,7 +13,7 @@ cp .env.example .env                 # set DISCOGS_USERNAME if it isn't seanmike
 docker compose up -d --build
 ```
 
-Open `http://<docker-host>:3020`. The first sync runs on startup and takes about 4 minutes for ~100 records (Discogs allows ~25 requests/minute without a token). Covers appear as they're cached.
+Open `http://<docker-host>:3020` (to use another port, change the left side of `ports:` in `docker-compose.yml`). The first sync runs on startup and takes about 4 minutes for ~100 records (Discogs allows ~25 requests/minute without a token). Covers appear as they're cached.
 
 **Update:** `git pull && docker compose up -d --build`
 
@@ -27,7 +27,7 @@ Open `http://<docker-host>:3020`. The first sync runs on startup and takes about
 |---|---|---|
 | `DISCOGS_USERNAME` | `seanmikel` | Whose public collection to sync |
 | `DISCOGS_TOKEN` | *(empty)* | Optional personal token — faster syncs (60 req/min). Discogs → Settings → Developers → Generate token |
-| `PORT` | `3020` | HTTP port inside the container |
+| `TZ` | `America/Los_Angeles` | Your time zone, used for month boundaries in play stats |
 | `SYNC_INTERVAL_HOURS` | `6` | How often to sync automatically (`0` = only on startup / "Sync now") |
 | `DETAIL_REFRESH_DAYS` | `7` | Re-fetch prices and ratings for a record after this many days |
 | `DETAIL_REFRESH_PER_RUN` | `15` | Max out-of-date records refreshed per scheduled sync (spreads the load) |

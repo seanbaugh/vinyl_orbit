@@ -4,8 +4,12 @@ services:
     image: vinyl-orbit:latest
     container_name: vinyl-orbit
     ports:
-      - "3020:3020"
+      - "3020:3020"          # change the left side to use a different host port
     env_file: .env
+    environment:
+      # Pinned here (these win over .env) so the database always lands on the ./data volume.
+      DATA_DIR: /data
+      PORT: "3020"
     volumes:
       - ./data:/data
     restart: unless-stopped

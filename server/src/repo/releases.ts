@@ -72,9 +72,12 @@ export function markRemoved(db: Db, seenIds: number[], now: string): number {
 }
 
 function flattenTracks(tracklist: DiscogsTrack[]): DiscogsTrack[] {
-  return tracklist.flatMap((t) =>
-    t.type_ === 'index' ? [{ ...t, type_: 'heading' as const }, ...(t.sub_tracks ?? [])] : [t],
-  );
+  return tracklist.flatMap((t) => {
+    if (t.type_ !== 'index') return [t];
+    const subs = (t.sub_tracks ?? []).map((sub) => ({ ...sub, position: sub.position || t.position }));
+    const subsTimed = subs.some((sub) => sub.duration);
+    return [{ ...t, type_: 'heading' as const, duration: subsTimed ? '' : t.duration }, ...subs];
+  });
 }
 
 export function applyDetail(db: Db, rel: DiscogsRelease, now: string): void {
@@ -82,9 +85,10 @@ export function applyDetail(db: Db, rel: DiscogsRelease, now: string): void {
   if (!exists) return;
 
   const images = [...(rel.images ?? [])].sort((a, b) => Number(a.type !== 'primary') - Number(b.type !== 'primary'));
+  // Cached files are named by idx, so a cached path is only still valid if the same image sits at the same idx.
   const existingLocal = new Map(
-    (db.prepare('SELECT remote_url, local_path FROM images WHERE release_id = ?').all(rel.id) as
-      { remote_url: string; local_path: string | null }[]).map((r) => [r.remote_url, r.local_path]),
+    (db.prepare('SELECT idx, remote_url, local_path FROM images WHERE release_id = ?').all(rel.id) as
+      { idx: number; remote_url: string; local_path: string | null }[]).map((r) => [`${r.idx}|${r.remote_url}`, r.local_path]),
   );
 
   db.transaction(() => {
@@ -126,7 +130,7 @@ export function applyDetail(db: Db, rel: DiscogsRelease, now: string): void {
     const insImage = db.prepare(`INSERT INTO images (release_id, idx, type, remote_url, local_path, width, height)
                                  VALUES (?, ?, ?, ?, ?, ?, ?)`);
     images.forEach((img, idx) =>
-      insImage.run(rel.id, idx, img.type, img.uri, existingLocal.get(img.uri) ?? null, img.width ?? null, img.height ?? null));
+      insImage.run(rel.id, idx, img.type, img.uri, existingLocal.get(`${idx}|${img.uri}`) ?? null, img.width ?? null, img.height ?? null));
 
     db.prepare(`INSERT OR REPLACE INTO price_history (release_id, recorded_on, lowest_price, num_for_sale)
                 VALUES (?, ?, ?, ?)`).run(rel.id, now.slice(0, 10), rel.lowest_price ?? null, rel.num_for_sale ?? null);
@@ -145,11 +149,17 @@ export function releasesNeedingDetail(
   return [...fresh, ...stale];
 }
 
-export function imagesMissingLocal(db: Db): { releaseId: number; idx: number; remoteUrl: string }[] {
-  return db.prepare(`SELECT i.release_id AS releaseId, i.idx, i.remote_url AS remoteUrl FROM images i
-                     JOIN releases r ON r.id = i.release_id
-                     WHERE i.local_path IS NULL AND r.removed_at IS NULL ORDER BY i.idx, i.release_id`).all() as
-    { releaseId: number; idx: number; remoteUrl: string }[];
+/** Images with no cached file. Pass `exists` to also treat recorded-but-deleted files as missing. */
+export function imagesMissingLocal(
+  db: Db, exists?: (localPath: string) => boolean,
+): { releaseId: number; idx: number; remoteUrl: string }[] {
+  const rows = db.prepare(`SELECT i.release_id AS releaseId, i.idx, i.remote_url AS remoteUrl, i.local_path AS localPath
+                           FROM images i JOIN releases r ON r.id = i.release_id
+                           WHERE r.removed_at IS NULL ORDER BY i.idx, i.release_id`).all() as
+    { releaseId: number; idx: number; remoteUrl: string; localPath: string | null }[];
+  return rows
+    .filter((r) => r.localPath === null || (exists !== undefined && !exists(r.localPath)))
+    .map(({ releaseId, idx, remoteUrl }) => ({ releaseId, idx, remoteUrl }));
 }
 
 export function setImageLocalPath(db: Db, releaseId: number, idx: number, path: string): void {
@@ -161,13 +171,13 @@ export function setImageLocalPath(db: Db, releaseId: number, idx: number, path: 
 interface ListRow {
   id: number; title: string; artists_display: string; year: number | null; format_summary: string;
   genres_json: string; styles_json: string; labels_json: string; cover_remote: string | null;
-  cover_local: string | null; date_added: string; lowest_price: number | null; play_count: number;
+  cover_local: string | null; cover_image_remote: string | null; date_added: string; lowest_price: number | null; play_count: number;
   last_played_at: string | null; copies: number; removed_at: string | null;
 }
 
 const LIST_SELECT = `
   SELECT r.id, r.title, r.artists_display, r.year, r.format_summary, r.genres_json, r.styles_json, r.labels_json,
-    r.cover_remote, i0.local_path AS cover_local, r.date_added, r.lowest_price, r.copies, r.removed_at,
+    r.cover_remote, i0.local_path AS cover_local, i0.remote_url AS cover_image_remote, r.date_added, r.lowest_price, r.copies, r.removed_at,
     (SELECT count(*) FROM plays p WHERE p.release_id = r.id) AS play_count,
     (SELECT max(played_at) FROM plays p WHERE p.release_id = r.id) AS last_played_at
   FROM releases r
@@ -212,7 +222,7 @@ function toListItems(db: Db, rows: ListRow[]): ReleaseListItem[] {
     genres: parse(r.genres_json, []),
     styles: parse(r.styles_json, []),
     labels: parse(r.labels_json, []),
-    coverUrl: r.cover_local ? `/images/${r.id}/0.jpg` : r.cover_remote,
+    coverUrl: r.cover_local ? `/images/${r.id}/0.jpg` : r.cover_image_remote ?? r.cover_remote,
     dateAdded: r.date_added,
     lowestPrice: r.lowest_price,
     playCount: r.play_count,

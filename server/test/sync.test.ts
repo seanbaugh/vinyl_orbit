@@ -98,3 +98,21 @@ test('reports progress phases', async () => {
   await runSync({ db, client: fakeClient(fixtureOnly), config, onProgress: (p) => phases.add(p.phase) }, { full: false });
   expect([...phases]).toEqual(['collection', 'details', 'images', 'done']);
 });
+
+test('final: copies of one release split across collection pages still count as 2', async () => {
+  const item = fixtureOnly.find((i) => i.id === 7455230)!;
+  const filler = all.filter((i) => i.id !== 7455230).slice(0, 49);
+  // page size is 50 in the fake client: copy 1 on page 1, copy 2 on page 2
+  const items = [item, ...filler, { ...item, instance_id: 999 }];
+  await runSync({ db, client: fakeClient(items), config }, { full: false });
+  expect(db.prepare('SELECT copies FROM releases WHERE id = 7455230').get()).toEqual({ copies: 2 });
+});
+
+test('final: deleted cached images are re-downloaded on the next sync', async () => {
+  const { rmSync } = await import('node:fs');
+  await runSync({ db, client: fakeClient(fixtureOnly), config }, { full: false });
+  rmSync(join(config.dataDir, 'images'), { recursive: true, force: true });
+  const r = await runSync({ db, client: fakeClient(fixtureOnly), config }, { full: false });
+  expect(r.imagesSaved).toBeGreaterThan(0);
+  expect(existsSync(join(config.dataDir, 'images/7455230/0.jpg'))).toBe(true);
+});

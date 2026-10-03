@@ -30,3 +30,8 @@ export function fmtRelative(iso: string | null | undefined, now = Date.now()): s
   const n = Math.floor(diff / size);
   return `${n} ${name}${n === 1 ? '' : 's'} ago`;
 }
+
+/** Today's date in the viewer's local time zone as YYYY-MM-DD. */
+export function localToday(d = new Date()): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}

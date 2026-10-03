@@ -125,3 +125,8 @@ test('sync trigger and status', async () => {
   expect(triggered).toEqual([true]);
   expect((await get('/api/sync/status')).body).toEqual(status);
 });
+
+test('final: play timestamps with offsets are normalised to UTC', async () => {
+  const play = await send('POST', '/api/releases/7455230/plays', { playedAt: '2026-09-30T23:30:00-04:00' });
+  expect(play.body.playedAt).toBe('2026-10-01T03:30:00.000Z');
+});

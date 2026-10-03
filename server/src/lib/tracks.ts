@@ -30,9 +30,12 @@ export function groupTracks(tracks: TrackRow[]): SideGroup[] {
       groups.push(current);
     }
     current.tracks.push(...pendingHeadings, track);
+    // Headings normally have no duration; an index (medley) heading carries one only when its parts don't.
+    for (const row of [...pendingHeadings, track]) {
+      const secs = parseDuration(row.duration);
+      if (secs !== null) current.totalSeconds = (current.totalSeconds ?? 0) + secs;
+    }
     pendingHeadings = [];
-    const secs = parseDuration(track.duration);
-    if (secs !== null) current.totalSeconds = (current.totalSeconds ?? 0) + secs;
   }
   if (pendingHeadings.length) {
     if (current) current.tracks.push(...pendingHeadings);

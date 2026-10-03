@@ -14,6 +14,7 @@ RUN npm run build && npm prune --omit=dev
 # ---- runtime: production deps + built output only
 FROM node:22-alpine
 WORKDIR /app
+RUN apk add --no-cache tzdata
 ENV NODE_ENV=production DATA_DIR=/data PORT=3020
 COPY --from=build /app/package.json ./
 COPY --from=build /app/node_modules node_modules

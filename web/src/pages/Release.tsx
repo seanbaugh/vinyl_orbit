@@ -10,7 +10,8 @@ import { CoverImage } from '../components/CoverImage';
 import { CrateMenu } from '../components/CrateMenu';
 import { Lightbox } from '../components/Lightbox';
 import { TagEditor } from '../components/TagEditor';
-import { fmtDate, fmtInt, fmtMoney, fmtRelative, fmtSeconds } from '../lib/format';
+import { createAutosaver } from '../lib/autosave';
+import { fmtDate, fmtInt, fmtMoney, fmtRelative, fmtSeconds, localToday } from '../lib/format';
 
 const TABS = ['tracks', 'notes', 'history', 'details'] as const;
 type Tab = (typeof TABS)[number];
@@ -156,28 +157,33 @@ function Notes({ r }: { r: ReleaseDetail }) {
   const [mode, setMode] = useState<NoteMode>(() => (saved || readDraft(r.id) ? 'split' : 'edit'));
   const [state, setState] = useState<SaveState>(r.note ? { kind: 'saved', at: r.note.updatedAt } : { kind: 'idle' });
   const save = useSaveNote(r.id);
-  const lastSent = useRef(saved);
+  const saveRef = useRef(save.mutateAsync);
+  saveRef.current = save.mutateAsync;
 
-  // Debounced autosave; on failure keep a local draft and retry every 5 s.
+  // One autosaver per record: debounced save, local draft on every keystroke, flush when leaving.
+  const saver = useMemo(() => createAutosaver({
+    initial: saved,
+    delay: 800,
+    save: (t) => saveRef.current(t),
+    draft: (t) => writeDraft(r.id, t),
+    onState: (s) => setState(s === 'saved' ? { kind: 'saved', at: new Date().toISOString() } : { kind: s }),
+  }), [r.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
-    if (text === lastSent.current && state.kind !== 'failed') return;
-    const delay = state.kind === 'failed' ? 5000 : 800;
-    const t = setTimeout(() => {
-      setState({ kind: 'saving' });
-      save.mutate(text, {
-        onSuccess: (n) => {
-          lastSent.current = text;
-          writeDraft(r.id, null);
-          setState({ kind: 'saved', at: n.updatedAt ?? new Date().toISOString() });
-        },
-        onError: () => {
-          writeDraft(r.id, text);
-          setState({ kind: 'failed' });
-        },
-      });
-    }, delay);
-    return () => clearTimeout(t);
-  }, [text, state.kind]); // eslint-disable-line react-hooks/exhaustive-deps
+    // A draft restored from a failed save gets sent again.
+    if (text !== saved) saver.change(text);
+    const onLeave = () => saver.flush();
+    window.addEventListener('beforeunload', onLeave);
+    return () => {
+      window.removeEventListener('beforeunload', onLeave);
+      saver.dispose();
+    };
+  }, [saver]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const onChange = (v: string) => {
+    setText(v);
+    saver.change(v);
+  };
 
   const html = useMemo(() => DOMPurify.sanitize(marked.parse(text || '*Nothing yet.*', { async: false }) as string), [text]);
   const status = state.kind === 'saving' ? 'Saving…'
@@ -198,7 +204,7 @@ function Notes({ r }: { r: ReleaseDetail }) {
       </div>
       <div className={`notes-editor${mode === 'split' ? ' split' : ''}`}>
         {mode !== 'preview' && (
-          <textarea value={text} onChange={(e) => setText(e.target.value)} aria-label="Notes (Markdown)"
+          <textarea value={text} onChange={(e) => onChange(e.target.value)} aria-label="Notes (Markdown)"
             placeholder={'Write anything — pressing, condition, where you bought it, favourite tracks…\n\nMarkdown works: **bold**, - lists, > quotes'} />
         )}
         {mode !== 'edit' && <div className="markdown card card-pad" dangerouslySetInnerHTML={{ __html: html }} />}
@@ -208,7 +214,7 @@ function Notes({ r }: { r: ReleaseDetail }) {
 }
 
 function History({ r }: { r: ReleaseDetail }) {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localToday();
   const [date, setDate] = useState(today);
   const [note, setNote] = useState('');
   const addPlay = useAddPlay(r.id);

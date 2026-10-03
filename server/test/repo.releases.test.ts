@@ -123,3 +123,30 @@ test('title sort ignores leading articles, matching the A–Z rail', () => {
   expect(listReleases(fresh, { sort: 'title' }).map((r) => r.title))
     .toEqual(['Abbey Road', 'A Night at the Opera', 'The Wall', 'Zenyatta']);
 });
+
+test('final: reordered images drop stale local paths so the cover is re-downloaded', () => {
+  const rel = release(7455230);
+  applyDetail(db, rel, NOW);
+  setImageLocalPath(db, 7455230, 0, 'images/7455230/0.jpg');
+  setImageLocalPath(db, 7455230, 1, 'images/7455230/1.jpg');
+  const [a, b, ...rest] = rel.images!;
+  applyDetail(db, { ...rel, images: [{ ...b, type: 'primary' }, { ...a, type: 'secondary' }, ...rest] }, NOW);
+  const missing = imagesMissingLocal(db).filter((i) => i.releaseId === 7455230).map((i) => i.idx);
+  expect(missing).toContain(0);
+  expect(missing).toContain(1);
+  expect(getReleaseDetail(db, 7455230)!.coverUrl).toBe(b.uri);
+});
+
+test('final: index tracks with position-less sub-tracks stay on their side and count runtime', () => {
+  const rel = release(7455230);
+  const t = (position: string, title: string, duration: string, type_: 'track' | 'index' = 'track', sub_tracks?: any[]) =>
+    ({ position, title, duration, type_, sub_tracks });
+  applyDetail(db, { ...rel, tracklist: [
+    t('A1', 'One', '3:00'),
+    t('A2', 'Medley', '10:00', 'index', [t('', 'Part i', ''), t('', 'Part ii', '')]),
+    t('A3', 'Three', '2:00'),
+    t('B1', 'Four', '1:00'),
+  ] as any }, NOW);
+  const sides = getReleaseDetail(db, 7455230)!.sides;
+  expect(sides.map((s) => [s.side, s.totalSeconds])).toEqual([['A', 900], ['B', 60]]);
+});
