@@ -522,10 +522,20 @@ table.data td.clip { max-width: 260px; overflow: hidden; text-overflow: ellipsis
 }
 
 /* ------------------------------------------------------------------ spinning now (full-screen, TV-friendly) */
-/* Display serif from the system (Didot/Bodoni ship with macOS and iOS) so the TV view needs no web font download. */
+/* Clarity City (SIL OFL, files in web/public/fonts) is self-hosted so the TV view makes no outside font requests. */
+@font-face {
+  font-family: "Clarity City"; font-style: normal; font-weight: 300 700; font-display: swap;
+  src: url("/fonts/claritycity-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Clarity City"; font-style: normal; font-weight: 300 700; font-display: swap;
+  src: url("/fonts/claritycity-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
 .spinning-now {
   --stage: min(80vh, 44vw);
-  --display: "Bodoni 72", "Bodoni MT", Didot, "Playfair Display", "Iowan Old Style", Georgia, serif;
+  --display: "Clarity City", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   position: fixed; inset: 0; z-index: 200; display: flex; flex-direction: row; align-items: center; justify-content: center;
   gap: 3vw; padding: 0 4vw 0 7vw; background: #0b0b0b; color: #fff; overflow: hidden;
 }
@@ -546,10 +556,10 @@ table.data td.clip { max-width: 260px; overflow: hidden; text-overflow: ellipsis
 .spinning-now .cover-disc-sleeve { cursor: default; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55); }
 .spinning-now-meta { position: relative; z-index: 1; flex: 1 1 0; max-width: 30vw; min-width: 0; text-align: left; overflow-wrap: anywhere; animation: spinning-now-fade 0.6s ease; }
 .spinning-now-meta h1 {
-  margin: 0; font-family: var(--display); font-size: clamp(28px, 3.5vw, 64px); font-weight: 500; line-height: 1.06; letter-spacing: -0.01em;
+  margin: 0; font-family: var(--display); font-size: clamp(28px, 3.5vw, 64px); font-weight: 600; line-height: 1.08; letter-spacing: -0.015em;
   text-wrap: balance; text-shadow: 0 2px 24px rgba(0, 0, 0, 0.45);
 }
-.spinning-now-album { margin: 0.7em 0 0; font-family: var(--display); font-style: italic; font-size: clamp(16px, 1.8vw, 32px); color: rgba(255, 255, 255, 0.82); }
+.spinning-now-album { margin: 0.7em 0 0; font-family: var(--display); font-weight: 400; font-size: clamp(16px, 1.8vw, 32px); color: rgba(255, 255, 255, 0.82); }
 .spinning-now-artist {
   margin: 1.1em 0 0; font-size: clamp(12px, 1.25vw, 20px); font-weight: 500; letter-spacing: 0.26em; text-transform: uppercase;
   color: color-mix(in srgb, var(--accent) 55%, #fff);

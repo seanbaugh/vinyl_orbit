@@ -162,4 +162,4 @@ Layout: `server/` (Fastify, better-sqlite3, sync engine, JSON API under `/api`),
 
 ## Credits
 
-This app is based on the amazing work of [neonsolstice](https://github.com/neonsolstice) and the [BookOrbit](https://github.com/bookorbit/bookorbit) app. Vinyl Orbit takes BookOrbit's look and layout and adapts them for a Discogs record collection.
+This app is based on the amazing work of [neonsolstice](https://github.com/neonsolstice) and the [BookOrbit](https://github.com/bookorbit/bookorbit) app. Vinyl Orbit takes BookOrbit's look and layout and adapts them for a Discogs record collection. The full-screen view's type is [Clarity City](https://fonts.google.com/specimen/Clarity+City) (SIL Open Font License, bundled in `web/public/fonts`).

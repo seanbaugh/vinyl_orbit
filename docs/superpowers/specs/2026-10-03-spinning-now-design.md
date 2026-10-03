@@ -33,8 +33,8 @@ Apple TV (AirPlay screen mirroring) to show it on a big screen. The app does not
 - New `web/src/components/SpinningNow.tsx`, rendered from `App.tsx`; open state lives in `NowSpinningProvider` (so the release page can open it too).
 - Visuals: blurred, enlarged cover as background. Landscape: cover and disc (`CoverDisc`) on the left, album info on the
   right, left-aligned; portrait: stacked and centred. A small letter-spaced "Now spinning" label sits at the top of the
-  screen (no large heading). Info: title in a display serif (system stack: Bodoni 72 / Didot, with fallbacks, so no web
-  font download), album in italic, artist in spaced capitals; thin progress bar and `n/N` (preview source only).
+  screen (no large heading). Info: title in Clarity City (SIL OFL; self-hosted in `web/public/fonts`, no outside font requests; system sans
+  fallback), album line in regular weight, artist in spaced capitals; thin progress bar and `n/N` (preview source only).
   Preview source: title = track, album line = release title. Marked record: title = release title, no album line.
 - Controls (previous, play/pause, next, close; Stop for the marked source) fade out after 3 s without pointer
   movement, and the cursor hides. Keys: Space play/pause, arrows prev/next, Esc closes.
