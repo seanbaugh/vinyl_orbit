@@ -1,6 +1,6 @@
 # Vinyl Orbit
 
-A self-hosted browser for your public Discogs collection: a cover-grid library with filters and an A–Z rail, large cover lightbox, side-by-side tracklists, credits and identifiers, 30-second Apple Music previews of every track with a mini-player that keeps playing while you browse, plus things Discogs doesn't do well — Markdown notes, personal tags, crates, a listening log, and price history.
+A self-hosted browser for your public Discogs collection: a cover-grid library with filters and an A–Z rail, large cover lightbox, side-by-side tracklists, credits and identifiers, 30-second Apple Music previews of every track with a mini-player that keeps playing while you browse, a full-screen **Spinning now** view for your TV (big cover art beside a spinning record or CD), plus things Discogs doesn't do well — Markdown notes, personal tags, crates, a listening log, and price history.
 
 Everything runs in one Docker container: a Node/Fastify server that syncs from the Discogs API into SQLite and serves a React app on port **3020**.
 
@@ -15,6 +15,9 @@ Vinyl Orbit is based on the amazing work of [neonsolstice](https://github.com/ne
 | ![Dashboard](docs/screenshots/dashboard.jpg) **Dashboard**: collection value, recently added, and records to pull | ![Release page with mini-player](docs/screenshots/player.png) **Release page**: tracklist with Apple Music previews and a mini-player |
 | ![Search palette](docs/screenshots/search.jpg) **Search (⌘K)**: records, artists, tracks and notes | ![Collection stats](docs/screenshots/stats.png) **Stats**: decades, genres, formats and plays |
 | ![Light theme](docs/screenshots/library-light.jpg) **Light theme and accent colours** | <img src="docs/screenshots/mobile-release.jpg" alt="Mobile release page" width="220"> **Mobile**: works on phones too |
+
+![Spinning now full-screen view](docs/screenshots/spinning-now.jpg)
+**Spinning now**: full-screen cover art beside a spinning record (or silver CD), made for mirroring to an Apple TV. See [Show it on your TV](#show-it-on-your-tv-airplay).
 
 ## Install on your Docker machine (step by step)
 
@@ -137,7 +140,7 @@ New records are always fetched in full on the next sync. **Sync now** in the sid
 ## Show it on your TV (AirPlay)
 
 - On your Mac open Control Center → **Screen Mirroring** and pick your Apple TV.
-- Open a record and press **Spin now** (it also logs a play), or play a preview and press **Spinning now** (⌘⇧S) in the top bar or mini-player.
+- Open a record and press **Spin now** (it also logs a play, at most once every 10 minutes). The same **Spin now** button is in the cover popup that opens when you click the cover. Or play a preview and press **Spinning now** (⌘⇧S) in the top bar or mini-player.
 - The TV shows the cover large beside a spinning record, or a silver CD for CDs. Controls fade out after a few seconds; **Esc** leaves.
 
 ## How track previews work
