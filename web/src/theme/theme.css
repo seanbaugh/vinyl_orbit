@@ -541,6 +541,8 @@ table.data td.clip { max-width: 260px; overflow: hidden; text-overflow: ellipsis
 .spinning-now-label::before, .spinning-now-label::after { content: ''; width: 3.5vw; height: 1px; background: rgba(255, 255, 255, 0.3); }
 .spinning-now-stage { position: relative; z-index: 1; flex: none; width: var(--stage); margin-right: calc(var(--stage) * 0.38); }
 .spinning-now .cover-disc { --disc-out: 38%; }
+/* Slower than the release page's 1.8s (a real 33 rpm record): easier on the eyes at TV size */
+.spinning-now .cover-disc.spinning .cover-disc-spin { animation-duration: 6s; }
 .spinning-now .cover-disc-sleeve { cursor: default; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55); }
 .spinning-now-meta { position: relative; z-index: 1; flex: 1 1 0; max-width: 30vw; min-width: 0; text-align: left; overflow-wrap: anywhere; animation: spinning-now-fade 0.6s ease; }
 .spinning-now-meta h1 {
