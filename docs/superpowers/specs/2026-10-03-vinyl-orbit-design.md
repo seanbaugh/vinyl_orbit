@@ -73,8 +73,9 @@ Stack: Fastify, better-sqlite3, Zod (request validation), React 18, Vite, React 
 | `DISCOGS_TOKEN` | (empty) | Optional; raises rate limit |
 | `PORT` | `3020` | HTTP port |
 | `DATA_DIR` | `/data` (`./data` in dev) | SQLite DB + image cache |
-| `SYNC_INTERVAL_HOURS` | `12` | Scheduled re-sync; `0` disables |
-| `DETAIL_REFRESH_DAYS` | `30` | Re-fetch release detail (prices, ratings) after N days |
+| `SYNC_INTERVAL_MINUTES` | `15` | Scheduled collection check; `0` disables |
+| `DETAIL_REFRESH_DAYS` | `7` | Re-fetch release detail (prices, ratings) after N days |
+| `DETAIL_REFRESH_PER_RUN` | `5` | Max stale (non-new) releases refreshed per scheduled run, spreading load |
 | `CURRENCY` | `USD` | Marketplace currency |
 
 ## 5. Data model (SQLite, `DATA_DIR/library.db`)
@@ -97,10 +98,10 @@ Releases removed from the Discogs collection get `removed_at` set (hidden by def
 ## 6. Sync
 
 1. **Collection pass:** page through folder 0 at `per_page=100`; upsert basic info; record seen ids; set `removed_at` on unseen, clear it on seen.
-2. **Detail queue:** releases with null `detail_synced_at` or older than `DETAIL_REFRESH_DAYS`. Fetch `/releases/{id}`; upsert release fields, replace tracks and images; append `price_history` row.
+2. **Detail queue:** all releases with null `detail_synced_at` (new — always fetched immediately), plus up to `DETAIL_REFRESH_PER_RUN` releases older than `DETAIL_REFRESH_DAYS`, oldest first (manual "Sync now" refreshes all stale ones). Fetch `/releases/{id}`; upsert release fields, replace tracks and images; append `price_history` row.
 3. **Image cache:** download the primary image (and secondaries) to `DATA_DIR/images/{release_id}/{idx}.jpg`; skip if present. Served at `/images/...`. If download fails, UI falls back to the remote URL then a placeholder.
 4. **Rate limiting:** token bucket (unauth: 1 req / 2.5 s; token: 1 req / 1.1 s). On HTTP 429, wait per `Retry-After` or exponential backoff (max 5 retries). Respect `X-Discogs-Ratelimit-Remaining`.
-5. **Scheduling:** run on startup and every `SYNC_INTERVAL_HOURS`; single-flight (a manual trigger during a run returns current status). Progress exposed via `GET /api/sync/status` (phase, done/total, last error, last completed).
+5. **Scheduling:** run on startup and every `SYNC_INTERVAL_MINUTES` (collection pass is 1 request per 100 releases, so frequent runs are cheap); single-flight (a manual trigger during a run returns current status). Progress exposed via `GET /api/sync/status` (phase, done/total, last error, last completed).
 6. **Failures:** per-release errors are logged and recorded; the run continues. Total failure leaves existing data intact.
 
 ## 7. API (JSON, prefix `/api`)
