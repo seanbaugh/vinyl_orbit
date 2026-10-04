@@ -61,11 +61,11 @@ function useSoftEdges(): [boolean, () => void] {
 }
 
 /** Soft, darkened cover filling the screen; pre-blurred once into a tiny canvas (see paintBackdrop). */
-function Backdrop({ src }: { src: string }) {
+function Backdrop({ src, abstract }: { src: string; abstract: boolean }) {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
-    if (ref.current) paintBackdrop(ref.current, src).catch(() => {});
-  }, [src]);
+    if (ref.current) paintBackdrop(ref.current, src, abstract).catch(() => {});
+  }, [src, abstract]);
   return <canvas ref={ref} className="spinning-now-bg" aria-hidden="true" />;
 }
 
@@ -141,7 +141,7 @@ function Overlay({ src, onClose }: { src: SpinSource; onClose: () => void }) {
 
   return (
     <div ref={rootRef} tabIndex={-1} className={`spinning-now${idle ? ' idle' : ''}${soft ? ' soft-edges' : ''}`} role="dialog" aria-label="Spinning now">
-      {src.coverUrl && <Backdrop src={src.coverUrl} />}
+      {src.coverUrl && <Backdrop src={src.coverUrl} abstract={soft} />}
       <div className="spinning-now-label">Now spinning</div>
       <div className="spinning-now-stage">
         <CoverDisc coverUrl={src.coverUrl} alt={src.album ?? src.headline} spinning={src.spinning} kind={src.discKind} />

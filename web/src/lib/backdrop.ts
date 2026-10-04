@@ -39,9 +39,10 @@ const loadImage = (src: string) => new Promise<HTMLImageElement>((resolve, rejec
 /**
  * Paints a soft, darkened version of the cover into `canvas` once. A live CSS blur on a full-screen element made WebKit
  * band and made the spinning disc jerk; a tiny static canvas that the browser merely stretches costs nothing per frame.
+ * `abstract` blurs far harder so only drifting colour is left, not the shapes of the cover (projector mode).
  * If the pixels can't be read (cross-origin cover) the canvas is left blank rather than showing a blocky picture.
  */
-export async function paintBackdrop(canvas: HTMLCanvasElement, src: string): Promise<void> {
+export async function paintBackdrop(canvas: HTMLCanvasElement, src: string, abstract = false): Promise<void> {
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
   if (!ctx) return;
   const img = await loadImage(src);
@@ -50,7 +51,7 @@ export async function paintBackdrop(canvas: HTMLCanvasElement, src: string): Pro
   ctx.drawImage(img, 0, 0, BACKDROP_SIZE, BACKDROP_SIZE);
   try {
     const px = ctx.getImageData(0, 0, BACKDROP_SIZE, BACKDROP_SIZE);
-    blurRgba(px.data, BACKDROP_SIZE, BACKDROP_SIZE, 2, 3);
+    blurRgba(px.data, BACKDROP_SIZE, BACKDROP_SIZE, abstract ? 6 : 2, 3);
     tintRgba(px.data, 1.3, 0.65);
     ctx.putImageData(px, 0, 0);
   } catch {

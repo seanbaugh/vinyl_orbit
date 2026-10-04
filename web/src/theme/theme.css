@@ -548,14 +548,15 @@ table.data td.clip { max-width: 260px; overflow: hidden; text-overflow: ellipsis
 .spinning-now.soft-edges { background: #000; }
 .spinning-now.soft-edges .spinning-now-bg {
   transform: none;
-  /* Two linear fades multiplied (intersect), so each of the four edges is fully transparent exactly at the screen
-     edge, whatever the aspect ratio. (A radial fade left the middle of each side only half faded.) */
-  --fade-x: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.4) 8%, #000 24%, #000 76%, rgba(0, 0, 0, 0.4) 92%, transparent);
-  --fade-y: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.4) 8%, #000 24%, #000 76%, rgba(0, 0, 0, 0.4) 92%, transparent);
-  -webkit-mask-image: var(--fade-x), var(--fade-y);
-  -webkit-mask-composite: source-in;
-  mask-image: var(--fade-x), var(--fade-y);
-  mask-composite: intersect;
+  /* Three masks multiplied (intersect): two slow, eased linear fades that are fully transparent before each edge, plus a
+     rounded one so the glow is an abstract blob rather than a blurred rectangle. Only the middle is at full strength. */
+  --fade-x: linear-gradient(to right, transparent 3%, rgba(0, 0, 0, 0.35) 12%, rgba(0, 0, 0, 0.8) 26%, #000 40%, #000 60%, rgba(0, 0, 0, 0.8) 74%, rgba(0, 0, 0, 0.35) 88%, transparent 97%);
+  --fade-y: linear-gradient(to bottom, transparent 3%, rgba(0, 0, 0, 0.35) 12%, rgba(0, 0, 0, 0.8) 26%, #000 40%, #000 60%, rgba(0, 0, 0, 0.8) 74%, rgba(0, 0, 0, 0.35) 88%, transparent 97%);
+  --fade-round: radial-gradient(ellipse closest-side at 50% 50%, #000 60%, transparent 100%);
+  -webkit-mask-image: var(--fade-x), var(--fade-y), var(--fade-round);
+  -webkit-mask-composite: source-in, source-in;
+  mask-image: var(--fade-x), var(--fade-y), var(--fade-round);
+  mask-composite: intersect, intersect;
 }
 .spinning-now-label {
   position: absolute; z-index: 1; top: 4.5vh; left: 0; right: 0; display: flex; align-items: center; justify-content: center; gap: 1.4vw;
