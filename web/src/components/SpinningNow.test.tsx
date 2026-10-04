@@ -284,3 +284,18 @@ test('the backdrop is a pre-blurred canvas when there is a cover, and absent wit
   await act(async () => h.player.play([item(1, { coverUrl: null })], 0));
   expect(view.container.querySelector('.spinning-now-bg')).toBeNull();
 });
+
+test('projector mode toggles soft edges and is remembered', async () => {
+  useReleaseMock.mockReturnValue(marked());
+  const { h, view } = setup();
+  await act(async () => h.ns.set(5));
+  const root = view.getByRole('dialog');
+  expect(root.classList.contains('soft-edges')).toBe(false);
+  await act(async () => view.getByRole('button', { name: 'Projector mode' }).click());
+  expect(root.classList.contains('soft-edges')).toBe(true);
+  expect(localStorage.getItem('vo-spin-soft')).toBe('1');
+  cleanup();
+  const again = setup();
+  await act(async () => again.h.ns.set(5));
+  expect(again.view.getByRole('dialog').classList.contains('soft-edges')).toBe(true);
+});
