@@ -548,15 +548,14 @@ table.data td.clip { max-width: 260px; overflow: hidden; text-overflow: ellipsis
 .spinning-now.soft-edges { background: #000; }
 .spinning-now.soft-edges .spinning-now-bg {
   transform: none;
-  /* Three masks multiplied (intersect): two slow, eased linear fades that are fully transparent before each edge, plus a
-     rounded one so the glow is an abstract blob rather than a blurred rectangle. Only the middle is at full strength. */
-  --fade-x: linear-gradient(to right, transparent 3%, rgba(0, 0, 0, 0.35) 12%, rgba(0, 0, 0, 0.8) 26%, #000 40%, #000 60%, rgba(0, 0, 0, 0.8) 74%, rgba(0, 0, 0, 0.35) 88%, transparent 97%);
-  --fade-y: linear-gradient(to bottom, transparent 3%, rgba(0, 0, 0, 0.35) 12%, rgba(0, 0, 0, 0.8) 26%, #000 40%, #000 60%, rgba(0, 0, 0, 0.8) 74%, rgba(0, 0, 0, 0.35) 88%, transparent 97%);
-  --fade-round: radial-gradient(ellipse closest-side at 50% 50%, #000 60%, transparent 100%);
-  -webkit-mask-image: var(--fade-x), var(--fade-y), var(--fade-round);
-  -webkit-mask-composite: source-in, source-in;
-  mask-image: var(--fade-x), var(--fade-y), var(--fade-round);
-  mask-composite: intersect, intersect;
+  /* Two eased linear fades, multiplied, are fully transparent before each edge: a guarantee of black there. The glow's
+     own uneven shape is painted into the canvas (lib/backdrop.ts cloudRgba), so it is not a rounded or boxy blob. */
+  --fade-x: linear-gradient(to right, transparent 2%, rgba(0, 0, 0, 0.4) 9%, rgba(0, 0, 0, 0.85) 20%, #000 32%, #000 68%, rgba(0, 0, 0, 0.85) 80%, rgba(0, 0, 0, 0.4) 91%, transparent 98%);
+  --fade-y: linear-gradient(to bottom, transparent 2%, rgba(0, 0, 0, 0.4) 9%, rgba(0, 0, 0, 0.85) 20%, #000 32%, #000 68%, rgba(0, 0, 0, 0.85) 80%, rgba(0, 0, 0, 0.4) 91%, transparent 98%);
+  -webkit-mask-image: var(--fade-x), var(--fade-y);
+  -webkit-mask-composite: source-in;
+  mask-image: var(--fade-x), var(--fade-y);
+  mask-composite: intersect;
 }
 .spinning-now-label {
   position: absolute; z-index: 1; top: 4.5vh; left: 0; right: 0; display: flex; align-items: center; justify-content: center; gap: 1.4vw;

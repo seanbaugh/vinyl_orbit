@@ -29,6 +29,27 @@ export function tintRgba(data: Uint8ClampedArray, saturate: number, brightness: 
   }
 }
 
+/** Off-centre soft blobs (x, y, spread x, spread y, strength, all in screen fractions) that make projector mode's glow an uneven cloud. */
+const BLOBS: ReadonlyArray<readonly [number, number, number, number, number]> = [
+  [0.28, 0.54, 0.30, 0.34, 1.0], [0.74, 0.38, 0.28, 0.22, 0.9], [0.50, 0.18, 0.24, 0.14, 0.65],
+  [0.62, 0.84, 0.30, 0.16, 0.75], [0.10, 0.28, 0.15, 0.20, 0.55], [0.90, 0.74, 0.15, 0.22, 0.55],
+];
+
+/** In-place: fades the pixels to black outside an uneven cloud, brighter where the cover itself is brighter. */
+export function cloudRgba(data: Uint8ClampedArray, w: number, h: number): void {
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const fx = (x + 0.5) / w, fy = (y + 0.5) / h;
+      let field = 0;
+      for (const [bx, by, sx, sy, k] of BLOBS) field += k * Math.exp(-(((fx - bx) / sx) ** 2 + ((fy - by) / sy) ** 2));
+      const i = (y * w + x) * 4;
+      const lum = (0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2]) / 255;
+      const f = Math.min(1, field) * (0.85 + 0.8 * Math.min(1, lum * 2));
+      for (let c = 0; c < 3; c++) data[i + c] *= f;
+    }
+  }
+}
+
 const loadImage = (src: string) => new Promise<HTMLImageElement>((resolve, reject) => {
   const img = new Image();
   img.onload = () => resolve(img);
@@ -53,6 +74,7 @@ export async function paintBackdrop(canvas: HTMLCanvasElement, src: string, abst
     const px = ctx.getImageData(0, 0, BACKDROP_SIZE, BACKDROP_SIZE);
     blurRgba(px.data, BACKDROP_SIZE, BACKDROP_SIZE, abstract ? 6 : 2, 3);
     tintRgba(px.data, 1.3, 0.65);
+    if (abstract) cloudRgba(px.data, BACKDROP_SIZE, BACKDROP_SIZE);
     ctx.putImageData(px, 0, 0);
   } catch {
     ctx.clearRect(0, 0, BACKDROP_SIZE, BACKDROP_SIZE);
