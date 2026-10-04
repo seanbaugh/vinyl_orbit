@@ -548,10 +548,10 @@ table.data td.clip { max-width: 260px; overflow: hidden; text-overflow: ellipsis
 .spinning-now.soft-edges { background: #000; }
 .spinning-now.soft-edges .spinning-now-bg {
   transform: none;
-  /* Two linear fades multiplied (intersect), so each of the four edges is fully transparent exactly at the screen
-     edge, whatever the aspect ratio. (A radial fade left the middle of each side only half faded.) */
-  --fade-x: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.4) 8%, #000 24%, #000 76%, rgba(0, 0, 0, 0.4) 92%, transparent);
-  --fade-y: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.4) 8%, #000 24%, #000 76%, rgba(0, 0, 0, 0.4) 92%, transparent);
+  /* Two eased linear fades, multiplied, are fully transparent before each edge: a guarantee of black there. The glow's
+     own uneven shape is painted into the canvas (lib/backdrop.ts cloudRgba), so it is not a rounded or boxy blob. */
+  --fade-x: linear-gradient(to right, transparent 2%, rgba(0, 0, 0, 0.4) 9%, rgba(0, 0, 0, 0.85) 20%, #000 32%, #000 68%, rgba(0, 0, 0, 0.85) 80%, rgba(0, 0, 0, 0.4) 91%, transparent 98%);
+  --fade-y: linear-gradient(to bottom, transparent 2%, rgba(0, 0, 0, 0.4) 9%, rgba(0, 0, 0, 0.85) 20%, #000 32%, #000 68%, rgba(0, 0, 0, 0.85) 80%, rgba(0, 0, 0, 0.4) 91%, transparent 98%);
   -webkit-mask-image: var(--fade-x), var(--fade-y);
   -webkit-mask-composite: source-in;
   mask-image: var(--fade-x), var(--fade-y);
