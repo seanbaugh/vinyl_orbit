@@ -1,4 +1,4 @@
-import { Pause, Play, SkipBack, SkipForward, Square, X } from 'lucide-react';
+import { Maximize2, Pause, Play, Projector, SkipBack, SkipForward, Square, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useRelease } from '../api/hooks';
 import { paintBackdrop } from '../lib/backdrop';
@@ -46,6 +46,19 @@ export function useSpinSource(): SpinSource | null {
 }
 
 const IDLE_MS = 3000;
+const SOFT_KEY = 'vo-spin-soft';
+
+/** Projector mode: the blurred cover fades to black before the screen edge, so no lit rectangle shows. Remembered per browser. */
+function useSoftEdges(): [boolean, () => void] {
+  const [soft, setSoft] = useState(() => {
+    try { return localStorage.getItem(SOFT_KEY) === '1'; } catch { return false; }
+  });
+  const toggle = () => setSoft((v) => {
+    try { localStorage.setItem(SOFT_KEY, v ? '0' : '1'); } catch { /* preference just won't persist */ }
+    return !v;
+  });
+  return [soft, toggle];
+}
 
 /** Soft, darkened cover filling the screen; pre-blurred once into a tiny canvas (see paintBackdrop). */
 function Backdrop({ src }: { src: string }) {
@@ -66,6 +79,7 @@ function Overlay({ src, onClose }: { src: SpinSource; onClose: () => void }) {
   const player = usePlayer();
   const { clear } = useNowSpinning();
   const [idle, setIdle] = useState(false);
+  const [soft, toggleSoft] = useSoftEdges();
   const rootRef = useRef<HTMLDivElement>(null);
   useEffect(() => rootRef.current?.focus({ preventScroll: true }), []);
   const isPreview = src.kind === 'preview';
@@ -126,7 +140,7 @@ function Overlay({ src, onClose }: { src: SpinSource; onClose: () => void }) {
   }, []);
 
   return (
-    <div ref={rootRef} tabIndex={-1} className={`spinning-now${idle ? ' idle' : ''}`} role="dialog" aria-label="Spinning now">
+    <div ref={rootRef} tabIndex={-1} className={`spinning-now${idle ? ' idle' : ''}${soft ? ' soft-edges' : ''}`} role="dialog" aria-label="Spinning now">
       {src.coverUrl && <Backdrop src={src.coverUrl} />}
       <div className="spinning-now-label">Now spinning</div>
       <div className="spinning-now-stage">
@@ -153,6 +167,10 @@ function Overlay({ src, onClose }: { src: SpinSource; onClose: () => void }) {
         ) : (
           <button className="icon-btn" onClick={() => { clear(); onClose(); }} aria-label="Stop"><Square /></button>
         )}
+        <button className="icon-btn" onClick={toggleSoft} aria-pressed={soft}
+          aria-label="Projector mode" title={soft ? 'Projector mode on: edges fade to black' : 'Projector mode: fade edges to black'}>
+          {soft ? <Projector /> : <Maximize2 />}
+        </button>
         <button className="icon-btn" onClick={onClose} aria-label="Close"><X /></button>
       </div>
     </div>
