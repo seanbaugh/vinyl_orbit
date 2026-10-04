@@ -548,8 +548,14 @@ table.data td.clip { max-width: 260px; overflow: hidden; text-overflow: ellipsis
 .spinning-now.soft-edges { background: #000; }
 .spinning-now.soft-edges .spinning-now-bg {
   transform: none;
-  -webkit-mask-image: radial-gradient(ellipse 72% 72% at 50% 50%, #000 40%, transparent 100%);
-  mask-image: radial-gradient(ellipse 72% 72% at 50% 50%, #000 40%, transparent 100%);
+  /* Two linear fades multiplied (intersect), so each of the four edges is fully transparent exactly at the screen
+     edge, whatever the aspect ratio. (A radial fade left the middle of each side only half faded.) */
+  --fade-x: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.4) 8%, #000 24%, #000 76%, rgba(0, 0, 0, 0.4) 92%, transparent);
+  --fade-y: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.4) 8%, #000 24%, #000 76%, rgba(0, 0, 0, 0.4) 92%, transparent);
+  -webkit-mask-image: var(--fade-x), var(--fade-y);
+  -webkit-mask-composite: source-in;
+  mask-image: var(--fade-x), var(--fade-y);
+  mask-composite: intersect;
 }
 .spinning-now-label {
   position: absolute; z-index: 1; top: 4.5vh; left: 0; right: 0; display: flex; align-items: center; justify-content: center; gap: 1.4vw;
