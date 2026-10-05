@@ -26,7 +26,7 @@ export const useSpinOptions = (enabled = true) =>
   useQuery({ queryKey: ['spin-options'], queryFn: () => api.get<SpinOptions>('/api/spin-options'), enabled });
 
 export interface SpinPickParams {
-  genre?: string; style?: string; format?: string; days?: number; neverPlayed?: boolean; exclude?: number[];
+  genre?: string[]; style?: string[]; format?: string; days?: number; neverPlayed?: boolean; exclude?: number[];
 }
 
 /** Each pick is a fresh random draw, so it is a mutation rather than a cached query. */

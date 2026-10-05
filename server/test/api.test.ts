@@ -189,7 +189,11 @@ test('spin-pick suggests an unplayed record, honours filters and exclusions, and
   const withinWindow = await get(`/api/spin-pick?neverPlayed=true`);
   expect(withinWindow.body.release.playCount).toBe(0);
 
+  const two = opts.body.genres.slice(0, 2).map((g: { value: string }) => g.value);
+  const many = await get(`/api/spin-pick?${two.map((g: string) => `genre=${encodeURIComponent(g)}`).join('&')}`);
+  expect(many.body.release.genres.some((g: string) => two.includes(g))).toBe(true);
   expect((await get('/api/spin-pick?genre=Nope')).body).toEqual({ release: null });
+  expect((await get('/api/spin-pick?genre=Nope&genre=Also%20Nope')).body).toEqual({ release: null });
   expect((await get('/api/spin-pick?days=abc')).status).toBe(400);
   expect((await get('/api/spin-pick?exclude=1;DROP')).status).toBe(400);
 });

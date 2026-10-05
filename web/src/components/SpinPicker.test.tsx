@@ -65,15 +65,31 @@ test('offers genre, mood (styles of the chosen genre) and a 7 day default window
   expect(screen.queryByRole('button', { name: 'Prog Rock' })).toBeNull();
 });
 
+test('several genres and moods can be chosen, and clicking again unchooses; Any clears the group', () => {
+  setup();
+  const pressed = (n: string) => screen.getByRole('button', { name: n }).getAttribute('aria-pressed');
+  fireEvent.click(screen.getByRole('button', { name: 'Rock' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Jazz' }));
+  expect([pressed('Rock'), pressed('Jazz')]).toEqual(['true', 'true']);
+  fireEvent.click(screen.getByRole('button', { name: 'Cool Jazz' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Jazz' }));
+  expect(pressed('Jazz')).toBe('false');
+  expect(screen.queryByRole('button', { name: 'Cool Jazz' })).toBeNull(); // its genre is no longer chosen
+  fireEvent.click(screen.getByRole('button', { name: 'Rock' }));
+  expect(pressed('Rock')).toBe('false');
+});
+
 test('sends the chosen filters, shows the suggestion and spins it', () => {
   hooks.pick.mockReturnValue(release(5, { lastPlayedAt: new Date(Date.now() - 40 * 86_400_000).toISOString() }));
   const h = setup();
   fireEvent.click(screen.getByRole('button', { name: 'Rock' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Jazz' }));
   fireEvent.click(screen.getByRole('button', { name: 'Prog Rock' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Cool Jazz' }));
   fireEvent.click(screen.getByRole('button', { name: 'LP' }));
   fireEvent.change(screen.getByLabelText('Skip records played in the last'), { target: { value: '30' } });
   fireEvent.click(screen.getByRole('button', { name: /Pick one/ }));
-  expect(hooks.pick).toHaveBeenCalledWith({ genre: 'Rock', style: 'Prog Rock', format: 'LP', days: 30, neverPlayed: false, exclude: [] });
+  expect(hooks.pick).toHaveBeenCalledWith({ genre: ['Rock', 'Jazz'], style: ['Prog Rock', 'Cool Jazz'], format: 'LP', days: 30, neverPlayed: false, exclude: [] });
   expect(screen.getByText('Album 5')).toBeTruthy();
   expect(screen.getByText(/Last played 1 month ago/)).toBeTruthy();
 

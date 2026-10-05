@@ -29,15 +29,27 @@ beforeEach(() => {
 });
 
 test('returns null when nothing matches', () => {
-  expect(pickSpin(db, { genre: 'Classical' }, NOW)).toBeNull();
+  expect(pickSpin(db, { genres: ['Classical'] }, NOW)).toBeNull();
 });
 
 test('only picks records from the chosen genre, style and format', () => {
   for (let i = 0; i < 20; i++) {
-    expect(pickSpin(db, { genre: 'Rock' }, NOW, Math.random)!.genres).toContain('Rock');
-    expect(pickSpin(db, { style: 'Cool Jazz' }, NOW)!.id).toBe(ids[2]);
-    expect(pickSpin(db, { genre: 'Rock', format: 'CD' }, NOW)!.id).toBe(ids[1]);
+    expect(pickSpin(db, { genres: ['Rock'] }, NOW, Math.random)!.genres).toContain('Rock');
+    expect(pickSpin(db, { styles: ['Cool Jazz'] }, NOW)!.id).toBe(ids[2]);
+    expect(pickSpin(db, { genres: ['Rock'], format: 'CD' }, NOW)!.id).toBe(ids[1]);
   }
+});
+
+test('several genres or moods match any of them; genre and mood together must both match', () => {
+  const seen = (q: object) => {
+    const out = new Set<number>();
+    for (let i = 0; i < 200; i++) out.add(pickSpin(db, q, NOW, () => i / 200)!.id);
+    return [...out].sort((a, b) => a - b);
+  };
+  expect(seen({ genres: ['Jazz', 'Pop'] })).toEqual([ids[1], ids[2]]);
+  expect(seen({ styles: ['Cool Jazz', 'Synth-pop'] })).toEqual([ids[1], ids[2]]);
+  expect(seen({ genres: ['Rock', 'Jazz'], styles: ['Cool Jazz', 'Synth-pop'] })).toEqual([ids[1], ids[2]]);
+  expect(pickSpin(db, { genres: ['Jazz'], styles: ['Prog Rock', 'Synth-pop'] }, NOW)).toBeNull();
 });
 
 test('skips records played within the window (default 7 days) but not older plays', () => {

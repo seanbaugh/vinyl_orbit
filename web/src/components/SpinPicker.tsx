@@ -4,7 +4,7 @@ import type { ReleaseListItem } from '@api/api-types';
 import { useSpinOptions, useSpinPick } from '../api/hooks';
 import { fmtRelative } from '../lib/format';
 import {
-  DEFAULT_WINDOW, formatChoices, moodChoices, toPickParams, WINDOW_LABELS, type SpinFilters, type SpinWindow,
+  DEFAULT_WINDOW, formatChoices, keepAvailableMoods, moodChoices, toggle, toPickParams, WINDOW_LABELS, type SpinFilters, type SpinWindow,
 } from '../lib/spinPick';
 import { useSpinNow } from '../lib/useSpinNow';
 import { CoverImage } from './CoverImage';
@@ -36,7 +36,7 @@ const Chip = ({ label, active, onClick }: { label: string; active: boolean; onCl
 function SpinPickerDialog({ onClose, onToast }: { onClose: () => void; onToast: (message: string) => void }) {
   const { data: options, isLoading, error } = useSpinOptions();
   const picker = useSpinPick();
-  const [filters, setFilters] = useState<SpinFilters>({ window: DEFAULT_WINDOW });
+  const [filters, setFilters] = useState<SpinFilters>({ genres: [], styles: [], window: DEFAULT_WINDOW });
   const [shown, setShown] = useState<number[]>([]);
   const [pick, setPick] = useState<ReleaseListItem | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -48,6 +48,10 @@ function SpinPickerDialog({ onClose, onToast }: { onClose: () => void; onToast: 
   }, [onClose]);
 
   const set = (patch: Partial<SpinFilters>) => setFilters((f) => ({ ...f, ...patch }));
+  const toggleGenre = (genre: string) => setFilters((f) => {
+    const genres = toggle(f.genres, genre);
+    return { ...f, genres, styles: options ? keepAvailableMoods(options, genres, f.styles) : f.styles };
+  });
 
   const draw = (exclude: number[]) =>
     picker.mutate(toPickParams(filters, exclude), {
@@ -66,7 +70,7 @@ function SpinPickerDialog({ onClose, onToast }: { onClose: () => void; onToast: 
       },
     });
 
-  const moods = options ? moodChoices(options, filters.genre) : [];
+  const moods = options ? moodChoices(options, filters.genres) : [];
   const formats = options ? formatChoices(options) : [];
 
   return (
@@ -88,22 +92,22 @@ function SpinPickerDialog({ onClose, onToast }: { onClose: () => void; onToast: 
             {options && (
               <>
                 <div>
-                  <div className="section-title">Genre</div>
+                  <div className="section-title">Genre <span className="muted">(pick any number)</span></div>
                   <div className="row wrap">
-                    <Chip label="Any" active={!filters.genre} onClick={() => set({ genre: undefined, style: undefined })} />
+                    <Chip label="Any" active={!filters.genres.length} onClick={() => set({ genres: [], styles: [] })} />
                     {options.genres.map((g) => (
-                      <Chip key={g.value} label={g.value} active={filters.genre === g.value}
-                        onClick={() => set({ genre: g.value, style: undefined })} />
+                      <Chip key={g.value} label={g.value} active={filters.genres.includes(g.value)} onClick={() => toggleGenre(g.value)} />
                     ))}
                   </div>
                 </div>
                 {moods.length > 0 && (
                   <div>
-                    <div className="section-title">Mood <span className="muted">(by Discogs style)</span></div>
+                    <div className="section-title">Mood <span className="muted">(by Discogs style, pick any number)</span></div>
                     <div className="row wrap">
-                      <Chip label="Any" active={!filters.style} onClick={() => set({ style: undefined })} />
+                      <Chip label="Any" active={!filters.styles.length} onClick={() => set({ styles: [] })} />
                       {moods.map((s) => (
-                        <Chip key={s.value} label={s.value} active={filters.style === s.value} onClick={() => set({ style: s.value })} />
+                        <Chip key={s.value} label={s.value} active={filters.styles.includes(s.value)}
+                          onClick={() => set({ styles: toggle(filters.styles, s.value) })} />
                       ))}
                     </div>
                   </div>

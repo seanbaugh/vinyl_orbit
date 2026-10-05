@@ -8,8 +8,10 @@ const NEVER_PLAYED_DAYS = 3650;
 export const DEFAULT_SPIN_DAYS = 7;
 
 export interface SpinPickQuery {
-  genre?: string;
-  style?: string;
+  /** Match any of these genres. */
+  genres?: string[];
+  /** Match any of these styles (moods). A record must satisfy both the genre and the style groups. */
+  styles?: string[];
   format?: string;
   /** Skip records played within this many days (default 7). */
   days?: number;
@@ -28,8 +30,12 @@ export function pickSpin(db: Db, q: SpinPickQuery, now: Date = new Date(), rand:
   const params: unknown[] = [];
   const add = (clause: string, ...p: unknown[]) => { where.push(clause); params.push(...p); };
 
-  if (q.genre) add('EXISTS (SELECT 1 FROM json_each(r.genres_json) WHERE value = ?)', q.genre);
-  if (q.style) add('EXISTS (SELECT 1 FROM json_each(r.styles_json) WHERE value = ?)', q.style);
+  if (q.genres?.length) {
+    add('EXISTS (SELECT 1 FROM json_each(r.genres_json) WHERE value IN (SELECT value FROM json_each(?)))', JSON.stringify(q.genres));
+  }
+  if (q.styles?.length) {
+    add('EXISTS (SELECT 1 FROM json_each(r.styles_json) WHERE value IN (SELECT value FROM json_each(?)))', JSON.stringify(q.styles));
+  }
   if (q.format) add("r.format_summary LIKE ? ESCAPE '\\'", likePattern(q.format));
   if (q.neverPlayed) {
     add('last_played_at IS NULL');
