@@ -1,13 +1,14 @@
-import { Dices, Disc3, RefreshCw, SlidersHorizontal, X } from 'lucide-react';
+import { Clock, Dices, Disc3, RefreshCw, SlidersHorizontal, Sparkles, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { ReleaseListItem } from '@api/api-types';
 import { useSpinOptions, useSpinPick } from '../api/hooks';
 import { fmtRelative } from '../lib/format';
+import { formatFamily } from '../lib/formats';
 import {
   DEFAULT_WINDOW, formatChoices, keepAvailableMoods, moodChoices, toggle, toPickParams, WINDOW_LABELS, type SpinFilters, type SpinWindow,
 } from '../lib/spinPick';
 import { useSpinNow } from '../lib/useSpinNow';
-import { CoverImage } from './CoverImage';
+import { CoverDisc } from './CoverDisc';
 
 /** Top-bar button that suggests a random record you haven't played in a while. */
 export function SpinPicker() {
@@ -74,10 +75,12 @@ function SpinPickerDialog({ onClose, onToast }: { onClose: () => void; onToast: 
   const formats = options ? formatChoices(options) : [];
 
   return (
-    <div className="palette-wrap" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="card spin-picker" role="dialog" aria-label="Pick a spin">
-        <div className="row">
-          <h2 className="grow" style={{ margin: 0, fontSize: 18 }}>Pick a spin</h2>
+    <div className={`palette-wrap${pick ? ' reveal' : ''}`} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+      <div className={`card spin-picker${pick ? ' reveal' : ''}`} role="dialog" aria-label="Pick a spin">
+        {pick?.coverUrl && <img key={pick.id} className="spin-reveal-bg" src={pick.coverUrl} alt="" aria-hidden="true" />}
+        <div className="row spin-picker-head">
+          {!pick && <h2 className="grow" style={{ margin: 0, fontSize: 18 }}>Pick a spin</h2>}
+          {pick && <span className="grow" />}
           <button className="icon-btn" onClick={onClose} aria-label="Close"><X /></button>
         </div>
 
@@ -150,20 +153,32 @@ function PickResult({ release, busy, onAnother, onChange, onSpun }: {
 }) {
   const spinNow = useSpinNow(release.id, onSpun);
   const tags = [...release.genres, ...release.styles];
+  const kind = formatFamily(release.formatSummary) === 'cd' ? 'cd' : 'vinyl';
+  const fresh = !release.lastPlayedAt;
   return (
-    <div className="spin-pick-result">
-      <CoverImage src={release.coverUrl} alt={release.title} />
-      <div style={{ minWidth: 0 }}>
-        <div className="muted" style={{ fontSize: 12 }}>
-          {release.lastPlayedAt ? `Last played ${fmtRelative(release.lastPlayedAt)}` : 'Never played'}
+    <div className={`spin-reveal${busy ? ' busy' : ''}`}>
+      <div className="spin-reveal-stage">
+        <div className="spin-reveal-glow" aria-hidden="true" />
+        <div className="spin-reveal-shine">
+          <CoverDisc coverUrl={release.coverUrl} alt={release.title} spinning kind={kind} />
         </div>
-        <h3 style={{ margin: '2px 0' }}>{release.title}</h3>
-        <div>{release.artists}{release.year ? ` · ${release.year}` : ''}</div>
-        <div className="row wrap" style={{ margin: '8px 0' }}>
+      </div>
+      <div className="spin-reveal-meta">
+        <div className="spin-reveal-eyebrow"><Dices size={14} /> Your next spin</div>
+        <h3>{release.title}</h3>
+        <div className="spin-reveal-artist">{release.artists}</div>
+        <div className="spin-reveal-facts">
+          {[release.year, release.formatSummary].filter(Boolean).join(' · ')}
+        </div>
+        <div className={`spin-reveal-last${fresh ? ' fresh' : ''}`}>
+          {fresh ? <Sparkles size={14} /> : <Clock size={14} />}
+          <span>{fresh ? 'Never played' : `Last played ${fmtRelative(release.lastPlayedAt)}`}</span>
+        </div>
+        <div className="spin-reveal-tags">
           {tags.slice(0, 6).map((t) => <span key={t} className="chip">{t}</span>)}
         </div>
-        <div className="actions" style={{ margin: 0 }}>
-          <button className="btn btn-primary" onClick={spinNow}><Disc3 /> Spin now</button>
+        <div className="spin-reveal-actions">
+          <button className="btn btn-primary spin-reveal-go" onClick={spinNow}><Disc3 /> Spin now</button>
           <button className="btn" disabled={busy} onClick={onAnother}><RefreshCw /> Pick another</button>
           <button className="btn btn-ghost" onClick={onChange}><SlidersHorizontal /> Change filters</button>
         </div>

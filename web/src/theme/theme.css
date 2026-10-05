@@ -600,5 +600,95 @@ table.data td.clip { max-width: 260px; overflow: hidden; text-overflow: ellipsis
 .spin-picker { width: min(560px, calc(100vw - 32px)); max-height: 80vh; overflow-y: auto; padding: 18px; display: flex; flex-direction: column; gap: 16px; align-self: flex-start; }
 .spin-picker .row.wrap { gap: 6px; }
 .spin-picker .section-title { margin-bottom: 6px; }
-.spin-pick-result { display: grid; grid-template-columns: 140px 1fr; gap: 16px; align-items: start; }
-@media (max-width: 480px) { .spin-pick-result { grid-template-columns: 1fr; } .spin-pick-result .cover { max-width: 200px; } }
+/* The suggestion: a wide stage tinted by the blurred cover, a huge sleeve with its record sliding out, staggered text. */
+.palette-wrap.reveal { padding-top: 4vh; padding-bottom: 4vh; overflow-y: auto; background: rgba(5, 8, 8, 0.78); backdrop-filter: blur(6px); }
+.spin-picker { position: relative; }
+.spin-picker.reveal {
+  width: min(1040px, calc(100vw - 32px)); max-height: none; overflow: hidden; padding: 28px 36px 36px; gap: 0;
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border-strong));
+  box-shadow: 0 40px 120px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  animation: reveal-pop 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.1);
+}
+.spin-picker-head { position: relative; z-index: 2; }
+.spin-reveal-bg {
+  position: absolute; inset: -60px; width: calc(100% + 120px); height: calc(100% + 120px); object-fit: cover; z-index: 0;
+  filter: blur(54px) saturate(1.7) brightness(0.62); animation: reveal-bg-in 0.9s ease both; pointer-events: none;
+}
+.spin-picker.reveal::after { content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background: radial-gradient(120% 90% at 30% 40%, transparent 30%, rgba(0, 0, 0, 0.5)), linear-gradient(transparent 60%, rgba(0, 0, 0, 0.45)); }
+
+.spin-reveal { position: relative; z-index: 1; display: flex; align-items: center; gap: clamp(28px, 5vw, 72px); padding: 8px 0 0; }
+.spin-reveal-stage { position: relative; flex: none; width: min(46vw, 430px); margin-right: calc(min(46vw, 430px) * 0.3); transition: opacity 0.25s, transform 0.25s; }
+.spin-reveal.busy .spin-reveal-stage { opacity: 0.45; transform: scale(0.97); }
+.spin-reveal-glow {
+  position: absolute; inset: -12%; border-radius: 50%; z-index: 0; pointer-events: none;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 55%, transparent), transparent 65%); filter: blur(30px); opacity: 0.7;
+  animation: reveal-glow 3.2s ease-in-out infinite alternate;
+}
+.spin-reveal-shine { position: relative; z-index: 1; animation: reveal-sleeve 0.8s cubic-bezier(0.2, 0.9, 0.3, 1.05) both; }
+.spin-reveal .cover-disc { --disc-out: 30%; }
+.spin-reveal .cover-disc-record { animation: reveal-record 1.1s 0.35s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+.spin-reveal .cover-disc.spinning .cover-disc-spin { animation-duration: 7s; }
+.spin-reveal .cover-disc-sleeve { cursor: default; box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.08); }
+/* a single light sweep across the sleeve, like catching it in the light */
+.spin-reveal .cover-disc-sleeve::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.38) 50%, transparent 65%);
+  transform: translateX(-120%); animation: reveal-sweep 1.1s 0.6s ease-out forwards;
+}
+
+.spin-reveal-meta { flex: 1 1 0; min-width: 0; color: #fff; }
+.spin-reveal-meta > * { animation: reveal-up 0.6s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+.spin-reveal-meta > :nth-child(2) { animation-delay: 0.12s; }
+.spin-reveal-meta > :nth-child(3) { animation-delay: 0.2s; }
+.spin-reveal-meta > :nth-child(4) { animation-delay: 0.26s; }
+.spin-reveal-meta > :nth-child(5) { animation-delay: 0.32s; }
+.spin-reveal-meta > :nth-child(6) { animation-delay: 0.4s; }
+.spin-reveal-meta > :nth-child(7) { animation-delay: 0.48s; }
+.spin-reveal-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 14px;
+}
+.spin-reveal-meta h3 {
+  margin: 0; font-family: var(--display); font-weight: 700; font-size: clamp(30px, 4.4vw, 58px); line-height: 1.02; letter-spacing: -0.025em;
+  text-wrap: balance; overflow-wrap: anywhere; text-shadow: 0 4px 30px rgba(0, 0, 0, 0.45);
+}
+.spin-reveal-artist { margin-top: 12px; font-family: var(--display); font-size: clamp(17px, 2vw, 26px); color: rgba(255, 255, 255, 0.88); }
+.spin-reveal-facts { margin-top: 6px; font-size: 14px; letter-spacing: 0.06em; color: rgba(255, 255, 255, 0.6); }
+.spin-reveal-last {
+  display: inline-flex; align-items: center; gap: 8px; margin-top: 18px; padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 600;
+  background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.18); backdrop-filter: blur(8px);
+}
+.spin-reveal-last.fresh { background: color-mix(in srgb, var(--accent) 24%, transparent); border-color: color-mix(in srgb, var(--accent) 60%, transparent); }
+.spin-reveal-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
+.spin-reveal-tags .chip { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.16); color: rgba(255, 255, 255, 0.85); backdrop-filter: blur(8px); }
+.spin-reveal-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 28px; }
+.spin-reveal-actions .btn:not(.btn-primary):not(.btn-ghost) { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.2); color: #fff; backdrop-filter: blur(8px); }
+.spin-reveal-actions .btn-ghost { color: rgba(255, 255, 255, 0.75); }
+.spin-reveal-go { height: 52px; padding: 0 28px; font-size: 17px; font-weight: 700; border-radius: 999px; animation: reveal-pulse 2.4s 1.2s ease-in-out infinite; }
+.spin-reveal-go svg { width: 20px; height: 20px; }
+
+@keyframes reveal-pop { from { opacity: 0; transform: translateY(16px) scale(0.97); } }
+@keyframes reveal-bg-in { from { opacity: 0; transform: scale(1.15); } }
+@keyframes reveal-sleeve { from { opacity: 0; transform: translateY(26px) rotate(-5deg) scale(0.9); } }
+@keyframes reveal-record { from { transform: translateX(0); } }
+@keyframes reveal-sweep { to { transform: translateX(120%); } }
+@keyframes reveal-glow { from { opacity: 0.45; transform: scale(0.94); } to { opacity: 0.8; transform: scale(1.05); } }
+@keyframes reveal-up { from { opacity: 0; transform: translateY(18px); } }
+@keyframes reveal-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 55%, transparent); }
+  50% { box-shadow: 0 0 0 12px color-mix(in srgb, var(--accent) 0%, transparent), 0 0 34px color-mix(in srgb, var(--accent) 60%, transparent); }
+}
+@media (max-width: 760px) {
+  .spin-picker.reveal { padding: 18px 18px 26px; }
+  .spin-reveal { flex-direction: column; align-items: stretch; gap: 30px; }
+  .spin-reveal-stage { width: min(68vw, 340px); margin: 0 auto; transform: translateX(-12%); }
+  .spin-reveal.busy .spin-reveal-stage { transform: translateX(-12%) scale(0.97); }
+  .spin-reveal .cover-disc { --disc-out: 24%; }
+  .spin-reveal-meta { text-align: center; }
+  .spin-reveal-tags, .spin-reveal-actions { justify-content: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spin-picker.reveal, .spin-reveal-bg, .spin-reveal-shine, .spin-reveal-meta > *, .spin-reveal-glow, .spin-reveal-go,
+  .spin-reveal .cover-disc-record, .spin-reveal .cover-disc-sleeve::after, .spin-reveal .cover-disc.spinning .cover-disc-spin { animation: none; }
+}
