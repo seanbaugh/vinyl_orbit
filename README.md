@@ -1,6 +1,6 @@
 # Vinyl Orbit
 
-A self-hosted browser for your public Discogs collection: a cover-grid library with filters and an A–Z rail, large cover lightbox, side-by-side tracklists, credits and identifiers, 30-second Apple Music previews of every track with a mini-player that keeps playing while you browse, a full-screen **Spinning now** view for your TV (big cover art beside a spinning record or CD), plus things Discogs doesn't do well — Markdown notes, personal tags, crates, a listening log, and price history.
+A self-hosted browser for your public Discogs collection: a cover-grid library with filters and an A–Z rail, large cover lightbox, side-by-side tracklists, credits and identifiers, 30-second Apple Music previews of every track with a mini-player that keeps playing while you browse, a full-screen **Spinning now** view for your TV (big cover art beside a spinning record or CD), plus things Discogs doesn't do well — Markdown notes, personal tags, crates, a listening log, price history, and **Pick a spin** (a dice button in the top bar suggests a random record you haven't played lately, filtered by genre, mood, and format).
 
 Everything runs in one Docker container: a Node/Fastify server that syncs from the Discogs API into SQLite and serves a React app on port **3020**.
 

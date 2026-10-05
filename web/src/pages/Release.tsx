@@ -15,8 +15,7 @@ import { Lightbox } from '../components/Lightbox';
 import { TagEditor } from '../components/TagEditor';
 import { createAutosaver } from '../lib/autosave';
 import { formatClass, formatFamily } from '../lib/formats';
-import { useNowSpinning } from '../lib/nowSpinning';
-import { markSpinLogged, shouldLogSpin } from '../lib/spinLog';
+import { useSpinNow } from '../lib/useSpinNow';
 import { fmtDate, fmtInt, fmtMoney, fmtRelative, fmtSeconds, localToday } from '../lib/format';
 
 const TABS = ['tracks', 'notes', 'history', 'details'] as const;
@@ -31,7 +30,7 @@ export function Release() {
   const [toast, setToast] = useState<string | null>(null);
   const addPlay = useAddPlay(id);
   const player = usePlayer();
-  const nowSpinning = useNowSpinning();
+  const spinNow = useSpinNow(id, setToast);
 
   useEffect(() => {
     if (!toast) return;
@@ -41,18 +40,6 @@ export function Release() {
 
   if (isLoading) return <div className="empty">Loading…</div>;
   if (error || !r) return <div className="empty">{error ? (error as Error).message : 'Record not found.'}</div>;
-
-  // A record on the turntable: show it full-screen, and log the play once per 10 minutes.
-  const spinNow = () => {
-    player.stop(); // a preview from another record would otherwise take over the TV
-    nowSpinning.set(r.id);
-    if (shouldLogSpin(r.id)) {
-      addPlay.mutate({}, { onSuccess: () => { markSpinLogged(r.id); setToast('Logged a play'); } });
-    } else {
-      setToast('Spinning (play already logged)');
-    }
-    nowSpinning.setOpen(true);
-  };
 
   const label = r.labels[0];
   const runtime = r.sides.reduce((sum, s) => sum + (s.totalSeconds ?? 0), 0);

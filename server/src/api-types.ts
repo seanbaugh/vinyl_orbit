@@ -185,3 +185,15 @@ export interface PreviewCandidate {
   url: string | null;
   score: number;
 }
+
+export interface SpinGenreOption {
+  value: string;
+  count: number;
+  /** Discogs styles used within this genre: the closest thing the data has to a mood. */
+  styles: Facet[];
+}
+
+export interface SpinOptions {
+  genres: SpinGenreOption[];
+  formats: string[];
+}

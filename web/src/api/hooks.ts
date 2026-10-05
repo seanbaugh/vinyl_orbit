@@ -1,7 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
   Crate, Dashboard, Facets, Play, PreviewCandidate, PreviewInfo, ReleaseDetail, ReleaseListItem, ReleaseQuery, SearchResults,
-  Stats, SyncStatus, Tag,
+  SpinOptions, Stats, SyncStatus, Tag,
 } from '@api/api-types';
 
 
@@ -22,6 +22,22 @@ export const useRelease = (id: number) =>
 export const useFacets = () => useQuery({ queryKey: ['facets'], queryFn: () => api.get<Facets>('/api/facets') });
 export const useDashboard = () => useQuery({ queryKey: ['dashboard'], queryFn: () => api.get<Dashboard>('/api/dashboard') });
 export const useStats = () => useQuery({ queryKey: ['stats'], queryFn: () => api.get<Stats>('/api/stats') });
+export const useSpinOptions = (enabled = true) =>
+  useQuery({ queryKey: ['spin-options'], queryFn: () => api.get<SpinOptions>('/api/spin-options'), enabled });
+
+export interface SpinPickParams {
+  genre?: string[]; style?: string[]; format?: string; days?: number; neverPlayed?: boolean; exclude?: number[];
+}
+
+/** Each pick is a fresh random draw, so it is a mutation rather than a cached query. */
+export const useSpinPick = () =>
+  useMutation({
+    mutationFn: ({ exclude, neverPlayed, ...rest }: SpinPickParams) =>
+      api.get<{ release: ReleaseListItem | null }>('/api/spin-pick', {
+        ...rest, neverPlayed: neverPlayed || undefined, exclude: exclude?.length ? exclude.join(',') : undefined,
+      }).then((r) => r.release),
+  });
+
 export const useCrate = (id: number) => useQuery({ queryKey: ['crate', id], queryFn: () => api.get<Crate>(`/api/crates/${id}`) });
 
 export const useSearch = (q: string) =>

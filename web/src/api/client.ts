@@ -1,10 +1,11 @@
-type Params = Record<string, string | number | boolean | undefined | null>;
+type Params = Record<string, string | number | boolean | string[] | undefined | null>;
 
 function withParams(path: string, params?: Params): string {
   if (!params) return path;
   const sp = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) {
-    if (v !== undefined && v !== null && v !== '') sp.set(k, String(v));
+    if (Array.isArray(v)) v.forEach((item) => sp.append(k, item)); // repeated params: values may contain commas
+    else if (v !== undefined && v !== null && v !== '') sp.set(k, String(v));
   }
   const qs = sp.toString();
   return qs ? `${path}?${qs}` : path;
