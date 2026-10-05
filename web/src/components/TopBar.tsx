@@ -2,6 +2,7 @@ import { BarChart3, Menu, Moon, Palette, Search, Sun } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SpinningNowButton } from './SpinningNowButton';
+import { SpinPicker } from './SpinPicker';
 import { ACCENTS, useTheme } from '../theme/ThemeProvider';
 
 export function TopBar({ onMenu, onSearch }: { onMenu: () => void; onSearch: () => void }) {
@@ -28,6 +29,7 @@ export function TopBar({ onMenu, onSearch }: { onMenu: () => void; onSearch: () 
         <span className="kbd">{isMac ? '⌘' : 'Ctrl'} K</span>
       </button>
       <div className="spacer" />
+      <SpinPicker />
       <SpinningNowButton />
       <Link className="icon-btn" to="/stats" title="Stats" aria-label="Stats"><BarChart3 /></Link>
       <div ref={pickerRef} style={{ position: 'relative' }}>

@@ -595,3 +595,10 @@ table.data td.clip { max-width: 260px; overflow: hidden; text-overflow: ellipsis
 .spinning-now:focus { outline: none; }
 .spinning-now.idle { cursor: none; }
 .spinning-now.idle .spinning-now-controls { opacity: 0; pointer-events: none; }
+
+/* ------------------------------------------------------------------ pick a spin */
+.spin-picker { width: min(560px, calc(100vw - 32px)); max-height: 80vh; overflow-y: auto; padding: 18px; display: flex; flex-direction: column; gap: 16px; align-self: flex-start; }
+.spin-picker .row.wrap { gap: 6px; }
+.spin-picker .section-title { margin-bottom: 6px; }
+.spin-pick-result { display: grid; grid-template-columns: 140px 1fr; gap: 16px; align-items: start; }
+@media (max-width: 480px) { .spin-pick-result { grid-template-columns: 1fr; } .spin-pick-result .cover { max-width: 200px; } }

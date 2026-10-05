@@ -172,3 +172,24 @@ test('final: report a failed preview', async () => {
   expect((await send('POST', '/api/releases/7455230/previews/3/failed', {})).status).toBe(204);
   expect(previewCalls).toContain('markFailed 7455230 3');
 });
+
+test('spin-pick suggests an unplayed record, honours filters and exclusions, and reports no match', async () => {
+  const opts = await get('/api/spin-options');
+  expect(opts.body.genres.length).toBeGreaterThan(0);
+  const genre = opts.body.genres[0].value;
+
+  const first = await get(`/api/spin-pick?genre=${encodeURIComponent(genre)}`);
+  expect(first.status).toBe(200);
+  expect(first.body.release.genres).toContain(genre);
+
+  // A play today takes it out of the default 7-day window; excluding it works too.
+  await send('POST', `/api/releases/${first.body.release.id}/plays`, {});
+  const second = await get(`/api/spin-pick?exclude=${first.body.release.id}`);
+  expect(second.body.release.id).not.toBe(first.body.release.id);
+  const withinWindow = await get(`/api/spin-pick?neverPlayed=true`);
+  expect(withinWindow.body.release.playCount).toBe(0);
+
+  expect((await get('/api/spin-pick?genre=Nope')).body).toEqual({ release: null });
+  expect((await get('/api/spin-pick?days=abc')).status).toBe(400);
+  expect((await get('/api/spin-pick?exclude=1;DROP')).status).toBe(400);
+});
