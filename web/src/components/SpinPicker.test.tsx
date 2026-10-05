@@ -121,3 +121,15 @@ test('explains when nothing fits, and Escape closes the popup', () => {
   fireEvent.keyDown(document, { key: 'Escape' });
   expect(screen.queryByRole('dialog')).toBeNull();
 });
+
+test('moods clicked in the same tick are both kept', () => {
+  setup();
+  fireEvent.click(screen.getByRole('button', { name: 'Rock' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Jazz' }));
+  act(() => {
+    screen.getByRole('button', { name: 'Prog Rock' }).click();
+    screen.getByRole('button', { name: 'Cool Jazz' }).click();
+  });
+  const pressed = (n: string) => screen.getByRole('button', { name: n }).getAttribute('aria-pressed');
+  expect([pressed('Prog Rock'), pressed('Cool Jazz')]).toEqual(['true', 'true']);
+});

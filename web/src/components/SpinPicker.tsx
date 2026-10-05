@@ -49,6 +49,7 @@ function SpinPickerDialog({ onClose, onToast }: { onClose: () => void; onToast: 
   }, [onClose]);
 
   const set = (patch: Partial<SpinFilters>) => setFilters((f) => ({ ...f, ...patch }));
+  const toggleStyle = (style: string) => setFilters((f) => ({ ...f, styles: toggle(f.styles, style) }));
   const toggleGenre = (genre: string) => setFilters((f) => {
     const genres = toggle(f.genres, genre);
     return { ...f, genres, styles: options ? keepAvailableMoods(options, genres, f.styles) : f.styles };
@@ -109,8 +110,7 @@ function SpinPickerDialog({ onClose, onToast }: { onClose: () => void; onToast: 
                     <div className="row wrap">
                       <Chip label="Any" active={!filters.styles.length} onClick={() => set({ styles: [] })} />
                       {moods.map((s) => (
-                        <Chip key={s.value} label={s.value} active={filters.styles.includes(s.value)}
-                          onClick={() => set({ styles: toggle(filters.styles, s.value) })} />
+                        <Chip key={s.value} label={s.value} active={filters.styles.includes(s.value)} onClick={() => toggleStyle(s.value)} />
                       ))}
                     </div>
                   </div>
