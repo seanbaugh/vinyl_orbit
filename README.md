@@ -19,6 +19,12 @@ Vinyl Orbit is based on the amazing work of [neonsolstice](https://github.com/ne
 ![Spinning now full-screen view](docs/screenshots/spinning-now.jpg)
 **Spinning now**: full-screen cover art beside a spinning record (or silver CD), made for mirroring to an Apple TV. See [Show it on your TV](#show-it-on-your-tv-airplay).
 
+| | |
+|---|---|
+| ![Pick a spin: choose genres, moods and format](docs/screenshots/pick-a-spin-filters.jpg) **Pick a spin**: choose any genres, moods and format | ![Pick a spin result](docs/screenshots/pick-a-spin-result.jpg) **Your next spin**: a record you haven't played lately, with a huge cover |
+
+<img src="docs/screenshots/pick-a-spin-mobile.jpg" alt="Pick a spin on a phone" width="220"> **Pick a spin on a phone**
+
 ## Install on your Docker machine (step by step)
 
 Everything below is typed on the machine that runs Docker (e.g. over SSH). It takes about 5 minutes plus a few minutes for the first sync.
@@ -136,6 +142,15 @@ New records are always fetched in full on the next sync. **Sync now** in the sid
 - Discogs data (titles, tracklists, prices…) is overwritten on each sync.
 - Your notes, tags, crates and plays are never touched by a sync.
 - If you remove a record from your Discogs collection it's hidden, not deleted — add it back and its notes and plays reappear.
+
+## Pick a spin (can't decide what to play?)
+
+Press the dice button in the top bar and Vinyl Orbit suggests one record you haven't played in a while.
+
+- **Genre** and **Mood**: choose as many as you like. A record matches if it has *any* of the genres you chose and *any* of the moods you chose. Mood isn't something Discogs knows, so it uses Discogs *styles* (Ambient, Cool Jazz, Synth-pop…), listing those used inside your chosen genres.
+- **Format**: LP, CD, 7" or Cassette (only the ones you own are offered).
+- **Skip records played in the last**: 7 days by default; choose 30 or 90 days, a year, or *never played only*. Records are picked at random, favouring whichever has gone unplayed the longest.
+- On the suggestion, press **Spin now** (opens the full-screen view and logs a play, as on the record page), **Pick another** (never repeats one you've already seen in that popup), or **Change filters**.
 
 ## Show it on your TV (AirPlay)
 
