@@ -179,6 +179,20 @@ describe('when Home Assistant cannot be read', () => {
     expect(state().releaseId).toBeNull();
   });
 
+  test('an unexpected error while applying a tap is logged, not thrown out of the timer (which would crash the server)', async () => {
+    const poller = createHaPoller({
+      db,
+      read: async () => RECKLESS,
+      overrides: () => { throw new Error('boom'); },
+      now: () => clock,
+      log: { info: (message) => logs.push({ level: 'info', message }), warn: (message) => logs.push({ level: 'warn', message }) },
+    });
+    poller.start(5);
+    await new Promise((resolve) => setTimeout(resolve, 60));
+    poller.stop();
+    expect(logs.some((l) => l.level === 'warn' && l.message.includes('boom'))).toBe(true);
+  });
+
   test('a poller that never reaches Home Assistant does not throw out of tick', async () => {
     const { poller } = scripted([down()]);
     await expect(poller.tick()).resolves.toBeUndefined();

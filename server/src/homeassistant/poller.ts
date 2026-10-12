@@ -87,7 +87,14 @@ export function createHaPoller(deps: HaPollerDeps): HaPoller {
       const run = async () => {
         if (inFlight) return;
         inFlight = true;
-        try { await tick(); } finally { inFlight = false; }
+        try {
+          await tick();
+        } catch (err) {
+          // Never let a bug here become an unhandled rejection: that would take the whole server down.
+          log.warn(`Home Assistant poll failed: ${(err as Error).message}`);
+        } finally {
+          inFlight = false;
+        }
       };
       void run();
       timer = setInterval(run, intervalMs);
