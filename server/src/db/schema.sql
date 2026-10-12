@@ -134,3 +134,14 @@ CREATE TABLE IF NOT EXISTS preview_tracks (
   source TEXT NOT NULL CHECK (source IN ('album', 'search')),
   PRIMARY KEY (release_id, track_idx)
 );
+
+-- The record currently on the turntable (single row). tap counts Home Assistant tag taps.
+CREATE TABLE IF NOT EXISTS now_spinning (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  release_id INTEGER,
+  source TEXT,
+  updated_at TEXT,
+  tap INTEGER NOT NULL DEFAULT 0,
+  tap_at TEXT
+);
+INSERT OR IGNORE INTO now_spinning (id) VALUES (1);

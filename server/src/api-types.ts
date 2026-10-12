@@ -38,6 +38,18 @@ export interface Play {
   note: string | null;
 }
 
+export type NowSpinningSource = 'tag' | 'manual';
+
+export interface NowSpinningState {
+  releaseId: number | null;
+  source: NowSpinningSource | null;
+  updatedAt: string | null;
+  /** Counts Home Assistant tag taps; a change means a fresh tap. */
+  tap: number;
+  /** Milliseconds since the last tap (server clock), or null if there has been none. */
+  tapAgeMs: number | null;
+}
+
 export interface ReleaseListItem {
   id: number;
   title: string;

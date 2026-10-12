@@ -6,6 +6,7 @@ import type { Db } from './db/index.js';
 import type { PreviewService } from './previews/service.js';
 import { HttpError } from './routes/common.js';
 import { insightRoutes } from './routes/insights.js';
+import { nowSpinningRoutes } from './routes/nowSpinning.js';
 import { previewRoutes } from './routes/previews.js';
 import { releaseRoutes } from './routes/releases.js';
 import { syncRoutes } from './routes/sync.js';
@@ -37,6 +38,7 @@ export function buildApp(deps: AppDeps): FastifyInstance {
   app.get('/api/health', async () => ({ ok: true }));
   releaseRoutes(app, deps);
   userRoutes(app, deps);
+  nowSpinningRoutes(app, deps);
   insightRoutes(app, deps);
   syncRoutes(app, deps);
   previewRoutes(app, deps);
