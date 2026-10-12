@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "DATA_DIR=${DATA_DIR:-../data} tsx watch --env-file-if-exists=../.env src/main.ts",
-    "build": "tsc -p tsconfig.json && cp src/db/schema.sql dist/db/",
+    "build": "tsc -p tsconfig.json && cp src/db/schema.sql dist/db/ && mkdir -p dist/homeassistant && cp src/homeassistant/overrides.default.json dist/homeassistant/",
     "start": "node dist/main.js",
     "test": "vitest run"
   },

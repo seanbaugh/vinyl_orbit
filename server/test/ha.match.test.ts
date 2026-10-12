@@ -4,18 +4,12 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { openDb, type Db } from '../src/db/index.js';
-import { loadOverrides, matchRecord, type HaOverride, type HaPair } from '../src/homeassistant/match.js';
+import { loadAllOverrides, loadOverrides, matchRecord, type HaOverride, type HaPair } from '../src/homeassistant/match.js';
+import { seedReleases, type SeedRow } from './helpers.js';
 
-interface Row { id: number; title: string; artists: string; removed?: boolean }
+const seed = seedReleases;
 
-function seed(db: Db, rows: Row[]) {
-  const insert = db.prepare(`INSERT INTO releases (id, instance_ids, title, artists_display, artists_json, labels_json,
-    formats_json, format_summary, genres_json, styles_json, date_added, basic_synced_at, removed_at)
-    VALUES (?, '[]', ?, ?, '[]', '[]', '[]', 'LP', '[]', '[]', 'x', 'x', ?)`);
-  for (const r of rows) insert.run(r.id, r.title, r.artists, r.removed ? 'x' : null);
-}
-
-const ROWS: Row[] = [
+const ROWS: SeedRow[] = [
   { id: 1, title: 'Greatest Hits', artists: 'Melissa Manchester' },
   { id: 2, title: 'Greatest Hits', artists: 'Chicago' },
   { id: 3, title: 'Berio / Bartók', artists: 'Leonard Bernstein' },
@@ -97,6 +91,20 @@ describe('loadOverrides', () => {
     expect(loadOverrides(bad)).toEqual([]);
     writeFileSync(bad, JSON.stringify({ album: 'x' }));
     expect(loadOverrides(bad)).toEqual([]);
+  });
+
+  test('loadAllOverrides puts the user file ahead of the shipped defaults, and works without a user file', () => {
+    const file = join(dir, 'mine.json');
+    writeFileSync(file, JSON.stringify([{ album: 'The End', artist: 'Cody Fry', releaseId: 28449781 }]));
+    const merged = loadAllOverrides(file);
+    expect(merged[0]).toEqual({ album: 'The End', artist: 'Cody Fry', releaseId: 28449781 });
+    expect(merged.length).toBeGreaterThan(1);
+    expect(merged.some((o) => o.album === 'Amadeus')).toBe(true);
+    expect(loadAllOverrides(join(dir, 'absent.json')).some((o) => o.album === 'Amadeus')).toBe(true);
+    // matchRecord takes the first override that matches, so the user's entry beats the shipped one
+    const real = openDb(':memory:');
+    seedReleases(real, [{ id: 28449781, title: 'The End', artists: 'Cody Fry' }, { id: 28322470, title: 'The End', artists: 'Cody Fry' }]);
+    expect(matchRecord(real, { album: 'The End', artist: 'Cody Fry' }, merged)).toBe(28449781);
   });
 
   test('reads valid entries and skips malformed ones', () => {

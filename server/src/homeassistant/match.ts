@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import type { Db } from '../db/index.js';
 import { albumSim, normalizeAlbum, normalizeArtist } from '../previews/normalize.js';
 
@@ -24,6 +25,13 @@ export function loadOverrides(file: string): HaOverride[] {
   } catch {
     return [];
   }
+}
+
+const DEFAULTS_FILE = fileURLToPath(new URL('./overrides.default.json', import.meta.url));
+
+/** The user's own override file (read fresh each call, so edits need no restart) ahead of the shipped defaults. */
+export function loadAllOverrides(userFile: string): HaOverride[] {
+  return [...loadOverrides(userFile), ...loadOverrides(DEFAULTS_FILE)];
 }
 
 const key = (p: HaPair) => `${normalizeAlbum(p.album)}|${normalizeArtist(p.artist)}`;

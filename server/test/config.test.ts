@@ -12,7 +12,21 @@ test('defaults', () => {
     detailRefreshPerRun: 15,
     currency: 'USD',
     previewCountry: 'US',
+    haUrl: null,
+    haToken: null,
+    haPollSeconds: 5,
   });
+});
+
+test('Home Assistant settings', () => {
+  const c = loadConfig({ HA_URL: ' http://192.168.1.214:8123 ', HA_TOKEN: ' tok ', HA_POLL_SECONDS: '10' });
+  expect(c).toMatchObject({ haUrl: 'http://192.168.1.214:8123', haToken: 'tok', haPollSeconds: 10 });
+});
+
+test('empty Home Assistant settings are null, and the poll interval must be at least one second', () => {
+  expect(loadConfig({ HA_URL: '', HA_TOKEN: '' })).toMatchObject({ haUrl: null, haToken: null });
+  expect(() => loadConfig({ HA_POLL_SECONDS: '0' })).toThrow(/HA_POLL_SECONDS/);
+  expect(() => loadConfig({ HA_POLL_SECONDS: 'x' })).toThrow(/HA_POLL_SECONDS/);
 });
 
 test('overrides', () => {
