@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import { CommandPalette } from './components/CommandPalette';
 import { MiniPlayer } from './components/MiniPlayer';
+import { NowSpinningTapWatcher } from './components/NowSpinningTapWatcher';
 import { SpinningNow } from './components/SpinningNow';
 import { useSpinningNowShortcut } from './components/SpinningNowButton';
 import { useNowSpinning } from './lib/nowSpinning';
@@ -61,6 +62,7 @@ export function App() {
         </div>
       </div>
       <MiniPlayer />
+      <NowSpinningTapWatcher />
       {spin.open && <SpinningNow onClose={() => spin.setOpen(false)} />}
       {paletteOpen && <CommandPalette onClose={() => setPaletteOpen(false)} />}
     </div>
