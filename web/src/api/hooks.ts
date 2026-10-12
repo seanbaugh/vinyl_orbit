@@ -1,6 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
-  Crate, Dashboard, Facets, Play, PreviewCandidate, PreviewInfo, ReleaseDetail, ReleaseListItem, ReleaseQuery, SearchResults,
+  Crate, Dashboard, Facets, NowSpinningState, Play, PreviewCandidate, PreviewInfo, ReleaseDetail, ReleaseListItem, ReleaseQuery, SearchResults,
   SpinOptions, Stats, SyncStatus, Tag,
 } from '@api/api-types';
 
@@ -136,6 +136,47 @@ export function useAddPlay(releaseId: number) {
   return useMutation({
     mutationFn: (body: { playedAt?: string; note?: string | null } = {}) => api.post<Play>(`/api/releases/${releaseId}/plays`, body),
     onSuccess: () => invalidate(releaseId),
+  });
+}
+
+const NOW_SPINNING_KEY = ['nowSpinning'] as const;
+
+/** What is on the turntable, from the server; polled so every open screen follows a tag tap. */
+export const useNowSpinningState = () =>
+  useQuery({
+    queryKey: NOW_SPINNING_KEY,
+    queryFn: () => api.get<NowSpinningState>('/api/now-spinning'),
+    refetchInterval: 4000,
+    refetchOnWindowFocus: true,
+  });
+
+/** Spin now: the server marks the record and logs the play (once per 10 minutes). */
+export function useSetNowSpinning() {
+  const qc = useQueryClient();
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: (releaseId: number) => api.put<NowSpinningState & { playLogged: boolean }>('/api/now-spinning', { releaseId }),
+    onMutate: (releaseId) => {
+      qc.setQueryData<NowSpinningState>(NOW_SPINNING_KEY, (old) => ({
+        tap: 0, tapAgeMs: null, ...old, releaseId, source: 'manual', updatedAt: new Date().toISOString(),
+      }));
+    },
+    onSuccess: ({ playLogged: _playLogged, ...state }, releaseId) => {
+      qc.setQueryData(NOW_SPINNING_KEY, state);
+      invalidate(releaseId);
+    },
+    onError: () => qc.invalidateQueries({ queryKey: NOW_SPINNING_KEY }),
+  });
+}
+
+export function useClearNowSpinning() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.del('/api/now-spinning'),
+    onMutate: () => {
+      qc.setQueryData<NowSpinningState>(NOW_SPINNING_KEY, (old) => old && { ...old, releaseId: null, source: null, updatedAt: null });
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: NOW_SPINNING_KEY }),
   });
 }
 

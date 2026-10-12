@@ -7,7 +7,11 @@ import type { QueueItem } from '../player/queue';
 import { SpinningNow } from './SpinningNow';
 
 const useReleaseMock = vi.hoisted(() => vi.fn());
-vi.mock('../api/hooks', () => ({ useRelease: useReleaseMock }));
+vi.mock('../api/hooks', async () => ({
+  useRelease: useReleaseMock,
+  ...(await import('../test/fakeNowSpinning')).fakeNowSpinningHooks,
+}));
+import { fakeServer } from '../test/fakeNowSpinning';
 
 class FakeAudio extends EventTarget {
   src = '';
@@ -44,6 +48,7 @@ afterEach(cleanup);
 beforeEach(() => {
   HTMLCanvasElement.prototype.getContext = (() => null) as typeof HTMLCanvasElement.prototype.getContext; // jsdom has no canvas
   localStorage.clear();
+  fakeServer.reset();
   useReleaseMock.mockReset();
   useReleaseMock.mockReturnValue({ data: undefined });
 });
@@ -79,7 +84,7 @@ test('disc has the spinning class only while status is playing', async () => {
 test('marked record spins continuously and shows its album and artist', () => {
   useReleaseMock.mockReturnValue(marked());
   const { h, view } = setup();
-  act(() => h.ns.set(5));
+  act(() => { void h.ns.set(5); });
   expect(view.getByRole('heading', { name: 'Marked LP' })).toBeTruthy();
   expect(view.getByText('Marked Artist')).toBeTruthy();
   expect(view.container.querySelector('.cover-disc.spinning')).toBeTruthy();
@@ -88,14 +93,14 @@ test('marked record spins continuously and shows its album and artist', () => {
 test('marked CD renders the silver disc', () => {
   useReleaseMock.mockReturnValue(marked({ formatSummary: '2×CD' }));
   const { h, view } = setup();
-  act(() => h.ns.set(5));
+  act(() => { void h.ns.set(5); });
   expect(view.container.querySelector('.cover-disc.cd')).toBeTruthy();
 });
 
 test('preview source wins over the marked record', async () => {
   useReleaseMock.mockReturnValue(marked());
   const { h, view } = setup();
-  act(() => h.ns.set(5));
+  act(() => { void h.ns.set(5); });
   await act(async () => h.player.play([item(1)], 0));
   expect(view.getByRole('heading', { name: 'Track 1' })).toBeTruthy();
   expect(view.queryByText('Marked Artist')).toBeNull();
@@ -109,7 +114,7 @@ test('renders nothing with no source', () => {
 test('renders nothing, without crashing, when the marked release fails to load', () => {
   useReleaseMock.mockReturnValue({ data: undefined, error: new Error('404') });
   const { h, view } = setup();
-  act(() => h.ns.set(5));
+  act(() => { void h.ns.set(5); });
   expect(view.container.querySelector('.spinning-now')).toBeNull();
 });
 
@@ -213,7 +218,7 @@ test('Stop clears the marked record and closes', () => {
   stubBrowser();
   useReleaseMock.mockReturnValue(marked());
   const { h, view, onClose } = setup();
-  act(() => h.ns.set(5));
+  act(() => { void h.ns.set(5); });
   expect(view.queryByRole('button', { name: 'Next' })).toBeNull();
   act(() => { view.getByRole('button', { name: 'Stop' }).click(); });
   expect(h.ns.releaseId).toBeNull();
@@ -253,7 +258,7 @@ test('Space toggles even when the button that opened the overlay still has focus
 test('keeps the marked record loaded while a preview plays, so the fallback is ready when it ends', async () => {
   useReleaseMock.mockReturnValue(marked());
   const { h } = setup();
-  act(() => h.ns.set(5));
+  act(() => { void h.ns.set(5); });
   await act(async () => h.player.play([item(1)], 0));
   expect(useReleaseMock).toHaveBeenLastCalledWith(5);
 });
@@ -261,7 +266,7 @@ test('keeps the marked record loaded while a preview plays, so the fallback is r
 test('"Now spinning" is a small label at the top, not a heading, for both sources', async () => {
   useReleaseMock.mockReturnValue(marked());
   const { h, view } = setup();
-  act(() => h.ns.set(5));
+  act(() => { void h.ns.set(5); });
   expect(view.getByText('Now spinning').className).toContain('spinning-now-label');
   expect(view.queryByRole('heading', { name: 'Now spinning' })).toBeNull();
   await act(async () => h.player.play([item(1)], 0));

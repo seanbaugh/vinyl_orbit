@@ -8,7 +8,8 @@ const hooks = vi.hoisted(() => ({
   pick: vi.fn(),
   addPlay: vi.fn(),
 }));
-vi.mock('../api/hooks', () => ({
+vi.mock('../api/hooks', async () => ({
+  ...(await import('../test/fakeNowSpinning')).fakeNowSpinningHooks,
   useSpinOptions: () => ({
     data: {
       genres: [
@@ -24,6 +25,7 @@ vi.mock('../api/hooks', () => ({
   }),
   useAddPlay: () => ({ mutate: (body: unknown, opts?: { onSuccess?: () => void }) => { hooks.addPlay(body); opts?.onSuccess?.(); } }),
 }));
+import { fakeServer } from '../test/fakeNowSpinning';
 import { SpinPicker } from './SpinPicker';
 
 class FakeAudio extends EventTarget {
@@ -53,6 +55,7 @@ function setup() {
 afterEach(cleanup);
 beforeEach(() => {
   localStorage.clear();
+  fakeServer.reset();
   hooks.pick.mockReset();
   hooks.addPlay.mockReset();
 });
@@ -79,7 +82,7 @@ test('several genres and moods can be chosen, and clicking again unchooses; Any 
   expect(pressed('Rock')).toBe('false');
 });
 
-test('sends the chosen filters, shows the suggestion and spins it', () => {
+test('sends the chosen filters, shows the suggestion and spins it', async () => {
   hooks.pick.mockReturnValue(release(5, { lastPlayedAt: new Date(Date.now() - 40 * 86_400_000).toISOString() }));
   const h = setup();
   fireEvent.click(screen.getByRole('button', { name: 'Rock' }));
@@ -93,10 +96,11 @@ test('sends the chosen filters, shows the suggestion and spins it', () => {
   expect(screen.getByText('Album 5')).toBeTruthy();
   expect(screen.getByText(/Last played 1 month ago/)).toBeTruthy();
 
-  act(() => { fireEvent.click(screen.getByRole('button', { name: /Spin now/ })); });
+  await act(async () => { fireEvent.click(screen.getByRole('button', { name: /Spin now/ })); });
   expect(h.ns.releaseId).toBe(5);
   expect(h.ns.open).toBe(true);
-  expect(hooks.addPlay).toHaveBeenCalledTimes(1);
+  expect(fakeServer.setCalls).toEqual([5]); // the server logs the play; the browser no longer does
+  expect(hooks.addPlay).not.toHaveBeenCalled();
   expect(screen.getByRole('status').textContent).toBe('Logged a play');
   expect(screen.queryByRole('dialog')).toBeNull();
 });

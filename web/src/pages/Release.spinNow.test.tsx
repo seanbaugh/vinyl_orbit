@@ -4,13 +4,15 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { NowSpinningProvider, useNowSpinning } from '../lib/nowSpinning';
 import { PlayerProvider, usePlayer } from '../player/PlayerProvider';
+import { fakeServer } from '../test/fakeNowSpinning';
 import { Release } from './Release';
 
 const mutate = vi.hoisted(() => vi.fn());
 const images = vi.hoisted(() => ({ list: [] as unknown[] }));
 vi.mock('../components/TagEditor', () => ({ TagEditor: () => null }));
 vi.mock('../components/CrateMenu', () => ({ CrateMenu: () => null }));
-vi.mock('../api/hooks', () => ({
+vi.mock('../api/hooks', async () => ({
+  ...(await import('../test/fakeNowSpinning')).fakeNowSpinningHooks,
   useRelease: () => ({
     data: {
       id: 1, title: 'Rel', artists: 'Art', coverUrl: null, formatSummary: 'LP', year: null, country: null, copies: 1,
@@ -45,37 +47,51 @@ function setup() {
   return { h, view };
 }
 
-const spin = (view: ReturnType<typeof setup>['view']) => act(() => { view.getByRole('button', { name: /Spin now/ }).click(); });
+const spin = (view: ReturnType<typeof setup>['view']) => act(async () => { view.getByRole('button', { name: /Spin now/ }).click(); });
 
 afterEach(cleanup);
 beforeEach(() => {
   localStorage.clear();
+  fakeServer.reset();
   images.list = [];
   mutate.mockReset();
   mutate.mockImplementation((_body: unknown, opts?: { onSuccess?: () => void }) => opts?.onSuccess?.());
 });
 
-test('Spin now marks the record, logs one play and opens the overlay', () => {
+test('Spin now asks the server to mark the record (it logs the play), opens the overlay and says a play was logged', async () => {
   const { h, view } = setup();
-  spin(view);
+  await spin(view);
   expect(h.ns.releaseId).toBe(1);
   expect(h.ns.open).toBe(true);
-  expect(mutate).toHaveBeenCalledTimes(1);
+  expect(fakeServer.setCalls).toEqual([1]);
+  expect(mutate).not.toHaveBeenCalled(); // the browser no longer logs the play itself
   expect(view.getByRole('status').textContent).toBe('Logged a play');
 });
 
-test('a second click within 10 minutes does not log another play', () => {
+test('when the server skipped the play as a repeat within 10 minutes, the toast says so', async () => {
   const { view } = setup();
-  spin(view);
-  spin(view);
-  expect(mutate).toHaveBeenCalledTimes(1);
+  await spin(view);
+  fakeServer.playLogged = false;
+  await spin(view);
+  expect(fakeServer.setCalls).toEqual([1, 1]);
+  expect(mutate).not.toHaveBeenCalled();
+  expect(view.getByRole('status').textContent).toBe('Spinning (play already logged)');
+});
+
+test('when the server cannot be reached the toast says so and the overlay still opens', async () => {
+  const { h, view } = setup();
+  fakeServer.failSet = true;
+  await spin(view);
+  expect(view.getByRole('status').textContent).toBe('Could not reach the server');
+  expect(h.ns.open).toBe(true);
+  expect(mutate).not.toHaveBeenCalled();
 });
 
 test('stops a preview from another record', async () => {
   const { h, view } = setup();
   await act(async () => h.player.play([{ releaseId: 99, trackIdx: 1, title: 'T', artists: 'A', releaseTitle: 'Other', coverUrl: null, previewUrl: 'https://x/u' }], 0));
   expect(h.player.state.status).not.toBe('idle');
-  spin(view);
+  await spin(view);
   expect(h.player.state.status).toBe('idle');
 });
 
@@ -88,14 +104,14 @@ test('Spin now is the first, primary action; Played it is secondary', () => {
   expect(played.classList.contains('btn-primary')).toBe(false);
 });
 
-test('Spin now in the cover popup marks the record, opens the overlay and closes the popup', () => {
+test('Spin now in the cover popup marks the record, opens the overlay and closes the popup', async () => {
   images.list = [{ idx: 0, url: '/a.jpg', width: 1, height: 1 }];
   const { h, view } = setup();
   act(() => { (view.container.querySelector('.cover-disc-sleeve') as HTMLElement).click(); });
   const popup = view.getByRole('dialog', { name: 'Images' });
-  act(() => { within(popup).getByRole('button', { name: /Spin now/ }).click(); });
+  await act(async () => { within(popup).getByRole('button', { name: /Spin now/ }).click(); });
   expect(h.ns.releaseId).toBe(1);
   expect(h.ns.open).toBe(true);
-  expect(mutate).toHaveBeenCalledTimes(1);
+  expect(fakeServer.setCalls).toEqual([1]);
   expect(view.queryByRole('dialog', { name: 'Images' })).toBeNull();
 });

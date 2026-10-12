@@ -1,51 +1,45 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-
-export const NOW_SPINNING_KEY = 'vinyl-orbit.nowSpinning';
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import { useClearNowSpinning, useNowSpinningState, useSetNowSpinning } from '../api/hooks';
 
 export interface NowSpinningApi {
-  /** The record the user marked as spinning on their turntable, or null. */
+  /** The record on the turntable (from the server: a tag tap or Spin now), or null. */
   releaseId: number | null;
-  set(id: number): void;
+  /** Counts tag taps on the server; null until the first load. A change means a fresh tap. */
+  tap: number | null;
+  /** How long ago the last tap was, by the server's clock; null until loaded or if there has been none. */
+  tapAgeMs: number | null;
+  /** Marks the record as spinning on the server, which logs the play. playLogged is false for a repeat within 10 minutes. */
+  set(id: number): Promise<{ playLogged: boolean }>;
   clear(): void;
   /** Whether the full-screen Spinning now view is showing. */
   open: boolean;
   setOpen(open: boolean): void;
 }
 
-const parseId = (raw: string | null): number | null => {
-  const n = Number(raw);
-  return raw !== null && Number.isInteger(n) && n > 0 ? n : null;
-};
-
-function readStored(): number | null {
-  try { return parseId(localStorage.getItem(NOW_SPINNING_KEY)); } catch { return null; }
-}
-
 const NowSpinningContext = createContext<NowSpinningApi | null>(null);
 
-/** The marked record lives in this browser only (you mirror from the device you control). */
+/** The marked record lives on the server, so every screen showing Vinyl Orbit follows it. */
 export function NowSpinningProvider({ children }: { children: ReactNode }) {
-  const [releaseId, setReleaseId] = useState<number | null>(readStored);
+  const state = useNowSpinningState().data;
+  const setMutation = useSetNowSpinning();
+  const clearMutation = useClearNowSpinning();
   const [open, setOpen] = useState(false);
 
-  useEffect(() => {
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === NOW_SPINNING_KEY) setReleaseId(parseId(e.newValue));
-    };
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
-  }, []);
+  const { mutateAsync } = setMutation;
+  const { mutate: clearMutate } = clearMutation;
+  const set = useCallback(async (id: number) => {
+    const { playLogged } = await mutateAsync(id);
+    return { playLogged };
+  }, [mutateAsync]);
+  const clear = useCallback(() => clearMutate(), [clearMutate]);
 
-  const set = useCallback((id: number) => {
-    setReleaseId(id);
-    try { localStorage.setItem(NOW_SPINNING_KEY, String(id)); } catch { /* storage unavailable: keep it in memory */ }
-  }, []);
-  const clear = useCallback(() => {
-    setReleaseId(null);
-    try { localStorage.removeItem(NOW_SPINNING_KEY); } catch { /* storage unavailable */ }
-  }, []);
-
-  const api = useMemo(() => ({ releaseId, set, clear, open, setOpen }), [releaseId, set, clear, open]);
+  const releaseId = state?.releaseId ?? null;
+  const tap = state?.tap ?? null;
+  const tapAgeMs = state?.tapAgeMs ?? null;
+  const api = useMemo(
+    () => ({ releaseId, tap, tapAgeMs, set, clear, open, setOpen }),
+    [releaseId, tap, tapAgeMs, set, clear, open],
+  );
   return <NowSpinningContext.Provider value={api}>{children}</NowSpinningContext.Provider>;
 }
 

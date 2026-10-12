@@ -4,7 +4,11 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { NowSpinningProvider, useNowSpinning } from '../lib/nowSpinning';
 import { PlayerProvider, usePlayer } from '../player/PlayerProvider';
 const useReleaseMock = vi.hoisted(() => vi.fn());
-vi.mock('../api/hooks', () => ({ useRelease: useReleaseMock }));
+vi.mock('../api/hooks', async () => ({
+  useRelease: useReleaseMock,
+  ...(await import('../test/fakeNowSpinning')).fakeNowSpinningHooks,
+}));
+import { fakeServer } from '../test/fakeNowSpinning';
 import { SpinningNowButton, useSpinningNowShortcut } from './SpinningNowButton';
 
 class FakeAudio extends EventTarget {
@@ -30,7 +34,7 @@ const chord = () => act(() => { window.dispatchEvent(new KeyboardEvent('keydown'
 
 afterEach(cleanup);
 beforeEach(() => {
-  localStorage.clear();
+  fakeServer.reset();
   useReleaseMock.mockReset();
   useReleaseMock.mockReturnValue({ data: undefined });
 });
@@ -47,7 +51,7 @@ test('visible when a preview is loaded', async () => {
 
 test('visible when a record is marked, and click opens the overlay', () => {
   const { h, view } = setup();
-  act(() => h.ns.set(3));
+  act(() => { void h.ns.set(3); });
   act(() => { view.getByRole('button', { name: /Spinning now/ }).click(); });
   expect(h.ns.open).toBe(true);
 });
@@ -56,7 +60,7 @@ test('⌘⇧S toggles the overlay only when a source exists', () => {
   const { h } = setup();
   chord();
   expect(h.ns.open).toBe(false);
-  act(() => h.ns.set(3));
+  act(() => { void h.ns.set(3); });
   chord();
   expect(h.ns.open).toBe(true);
   chord();
@@ -75,7 +79,7 @@ test('the overlay closes when the last source goes away', async () => {
 test('a marked record that cannot be loaded is cleared so the button does not get stuck', () => {
   useReleaseMock.mockReturnValue({ data: undefined, error: new Error('404') });
   const { h, view } = setup();
-  act(() => h.ns.set(3));
+  act(() => { void h.ns.set(3); });
   expect(h.ns.releaseId).toBeNull();
   expect(view.queryByRole('button', { name: /Spinning now/ })).toBeNull();
 });
