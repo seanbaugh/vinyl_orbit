@@ -134,6 +134,9 @@ Updating with `git pull` never touches `data/`.
 | `DETAIL_REFRESH_PER_RUN` | `15` | Max out-of-date records refreshed per scheduled sync (spreads the load) |
 | `CURRENCY` | `USD` | Marketplace price currency |
 | `PREVIEW_COUNTRY` | `US` | Apple Music storefront used for 30-second track previews |
+| `HA_URL` | *(empty)* | Home Assistant address, e.g. `http://192.168.1.214:8123`. Leave empty to keep [NFC tags](#nfc-tags-home-assistant) off |
+| `HA_TOKEN` | *(empty)* | Home Assistant long-lived access token (needed together with `HA_URL`) |
+| `HA_POLL_SECONDS` | `5` | How often to check Home Assistant (minimum 1) |
 
 New records are always fetched in full on the next sync. **Sync now** in the sidebar refreshes everything that's out of date immediately.
 
@@ -155,8 +158,33 @@ Press the dice button in the top bar and Vinyl Orbit suggests one record you hav
 ## Show it on your TV (AirPlay)
 
 - On your Mac open Control Center → **Screen Mirroring** and pick your Apple TV.
-- Open a record and press **Spin now** (it also logs a play, at most once every 10 minutes). The same **Spin now** button is in the cover popup that opens when you click the cover. Or play a preview and press **Spinning now** (⌘⇧S) in the top bar or mini-player.
+- Open a record and press **Spin now** (it also logs a play, at most once every 10 minutes; the server does the logging). Or tap an [NFC tag](#nfc-tags-home-assistant) and it happens by itself. The same **Spin now** button is in the cover popup that opens when you click the cover. Or play a preview and press **Spinning now** (⌘⇧S) in the top bar or mini-player.
 - The TV shows the cover large beside a spinning record, or a silver CD for CDs. Controls fade out after a few seconds; **Esc** leaves.
+
+## NFC tags (Home Assistant)
+
+If you already tap NFC tags on your records to show the album on Home Assistant, Vinyl Orbit can follow along: a tap logs a play (once per 10 minutes) and opens the full-screen **Spinning now** view on every screen that has Vinyl Orbit open, such as the browser you mirror to your TV.
+
+Vinyl Orbit only **reads** two helpers that your automation already fills in, `input_text.vinyl_album` and `input_text.vinyl_artist`. It changes nothing in Home Assistant, so your existing automations keep working untouched.
+
+1. In Home Assistant open your profile → **Security** → **Long-lived access tokens** → **Create token**, and copy it.
+2. Add to `.env` on the Docker machine (the machine must be able to reach Home Assistant):
+   ```
+   HA_URL=http://192.168.1.214:8123
+   HA_TOKEN=paste-the-token-here
+   ```
+3. `docker compose up -d --build`. The log says `Home Assistant now-spinning enabled`.
+
+How it behaves:
+- The album and artist text is matched to a record in your collection. Tags whose text can't match by itself (for example "Soundtrack" or an abbreviated title) are covered by a built-in list. To add or change one, create `ha-overrides.json` in your data folder (`./data` on the Docker machine); it is read on every check, so no restart is needed:
+  ```json
+  [{ "album": "Amadeus", "artist": "Soundtrack", "releaseId": 2170959 }]
+  ```
+  The `releaseId` is the number at the end of the record's Discogs URL. Your entries win over the built-in ones.
+- A tag whose record isn't in your collection does nothing (the server log says so once).
+- When Home Assistant clears the display (after an hour idle, or when Sonos starts), Vinyl Orbit's Spinning now view closes too, unless you chose the record with **Spin now** yourself.
+- Home Assistant being unreachable never breaks Vinyl Orbit: it logs one warning and keeps trying.
+- Tapping the tag of the record that is already showing writes the same value to Home Assistant, so Vinyl Orbit can't see it as a new tap.
 
 ## How track previews work
 
