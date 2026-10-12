@@ -51,6 +51,20 @@ describe('matchRecord', () => {
     expect(matchRecord(db, { album: 'Greatest Hits', artist: 'Bryan Adams' }, [])).toBeNull();
   });
 
+  test('a different number in the title is a different record, never a match', () => {
+    const numbered = openDb(':memory:');
+    seedReleases(numbered, [
+      { id: 10, title: 'Mahler Symphony No. 1', artists: 'Leonard Bernstein' },
+      { id: 11, title: 'Chicago II', artists: 'Chicago' },
+      { id: 12, title: 'Chicago VII', artists: 'Chicago' },
+    ]);
+    expect(matchRecord(numbered, { album: 'Mahler Symphony No 3', artist: 'Leonard Bernstein' }, [])).toBeNull();
+    expect(matchRecord(numbered, { album: 'Mahler Symphony No 1', artist: 'Leonard Bernstein' }, [])).toBe(10);
+    expect(matchRecord(numbered, { album: 'Chicago 2', artist: 'Chicago' }, [])).toBeNull(); // safe miss (an override covers it), never VII
+    expect(matchRecord(numbered, { album: 'Chicago VII', artist: 'Chicago' }, [])).toBe(12);
+    expect(matchRecord(numbered, { album: 'Chicago 3', artist: 'Chicago' }, [])).toBeNull();
+  });
+
   test('a title that is not in the collection is a miss', () => {
     expect(matchRecord(db, { album: 'Atlas', artist: 'Sleeping at Last' }, [])).toBeNull();
   });

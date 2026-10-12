@@ -34,6 +34,32 @@ export function loadAllOverrides(userFile: string): HaOverride[] {
   return [...loadOverrides(userFile), ...loadOverrides(DEFAULTS_FILE)];
 }
 
+const ROMAN_VALUES: Record<string, number> = { I: 1, V: 5, X: 10, L: 50, C: 100 };
+const ROMAN = /^(?:XC|XL|L?X{0,3})(?:IX|IV|V?I{0,3})$/;
+
+/** The numbers in a title: digits, plus upper-case Roman numerals of two or more letters ("VII"), so 2 equals II. */
+function numbersIn(title: string): Set<number> {
+  const numbers = new Set<number>();
+  for (const digits of normalizeAlbum(title).match(/\d+/g) ?? []) numbers.add(Number(digits));
+  const bare = title.replace(/\([^)]*\)|\[[^\]]*\]/g, ' ');
+  for (const word of bare.match(/\b[IVXLC]{2,}\b/g) ?? []) {
+    if (!ROMAN.test(word)) continue;
+    let total = 0;
+    for (let i = 0; i < word.length; i++) {
+      const value = ROMAN_VALUES[word[i]];
+      total += value < (ROMAN_VALUES[word[i + 1]] ?? 0) ? -value : value;
+    }
+    numbers.add(total);
+  }
+  return numbers;
+}
+
+const sameNumbers = (a: string, b: string) => {
+  const x = numbersIn(a);
+  const y = numbersIn(b);
+  return x.size === y.size && [...x].every((n) => y.has(n));
+};
+
 const key = (p: HaPair) => `${normalizeAlbum(p.album)}|${normalizeArtist(p.artist)}`;
 
 /** Maps the album/artist text Home Assistant holds for a tag to a release id in the collection, or null. */
@@ -50,6 +76,7 @@ export function matchRecord(db: Db, pair: HaPair, overrides: HaOverride[]): numb
   const rows = db.prepare('SELECT id, title, artists_display FROM releases WHERE removed_at IS NULL')
     .all() as { id: number; title: string; artists_display: string }[];
   const scored = rows
+    .filter((r) => sameNumbers(pair.album, r.title)) // "Symphony No 3" is never "Symphony No. 1"
     .map((r) => ({
       id: r.id,
       score: 0.6 * albumSim(album, normalizeAlbum(r.title)) + 0.4 * albumSim(artist, normalizeArtist(r.artists_display)),
