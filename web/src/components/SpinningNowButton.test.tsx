@@ -76,10 +76,10 @@ test('the overlay closes when the last source goes away', async () => {
   expect(h.ns.open).toBe(false);
 });
 
-test('a marked record that cannot be loaded is cleared so the button does not get stuck', () => {
-  useReleaseMock.mockReturnValue({ data: undefined, error: new Error('404') });
-  const { h, view } = setup();
+test('one screen failing to load the marked record never clears it for every screen', () => {
+  useReleaseMock.mockReturnValue({ data: undefined, error: new Error('network down') });
+  const { h } = setup();
   act(() => { void h.ns.set(3); });
-  expect(h.ns.releaseId).toBeNull();
-  expect(view.queryByRole('button', { name: /Spinning now/ })).toBeNull();
+  expect(fakeServer.clearCalls).toBe(0);
+  expect(h.ns.releaseId).toBe(3);
 });
