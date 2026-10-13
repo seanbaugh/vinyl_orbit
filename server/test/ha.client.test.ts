@@ -4,8 +4,11 @@ import { createHaClient } from '../src/homeassistant/client.js';
 const TOKEN = 'secret-token-123';
 type Handler = (url: string, init: RequestInit) => Response | Promise<Response>;
 
-const state = (value: string, status = 200) =>
-  new Response(JSON.stringify({ state: value }), { status, headers: { 'content-type': 'application/json' } });
+const state = (value: string, status = 200, attributes: object = {}) =>
+  new Response(JSON.stringify({ state: value, attributes }), { status, headers: { 'content-type': 'application/json' } });
+
+const AUTOMATION = 'automation.vinyl_now_playing';
+const isAutomation = (url: string) => url.endsWith(AUTOMATION);
 
 function client(handler: Handler, timeoutMs?: number) {
   const calls: { url: string; auth: string | null }[] = [];
@@ -19,8 +22,9 @@ function client(handler: Handler, timeoutMs?: number) {
 
 test('reads album and artist with the bearer token', async () => {
   const { ha, calls } = client((url) => state(url.endsWith('vinyl_album') ? 'Reckless' : 'Bryan Adams'));
-  expect(await ha.readHelpers()).toEqual({ album: 'Reckless', artist: 'Bryan Adams' });
+  expect(await ha.readHelpers()).toEqual({ album: 'Reckless', artist: 'Bryan Adams', triggeredAt: null });
   expect(calls.map((c) => c.url).sort()).toEqual([
+    `http://ha.local:8123/api/states/${AUTOMATION}`,
     'http://ha.local:8123/api/states/input_text.vinyl_album',
     'http://ha.local:8123/api/states/input_text.vinyl_artist',
   ]);
@@ -29,7 +33,7 @@ test('reads album and artist with the bearer token', async () => {
 
 test('an empty string is a valid empty value', async () => {
   const { ha } = client(() => state(''));
-  expect(await ha.readHelpers()).toEqual({ album: '', artist: '' });
+  expect(await ha.readHelpers()).toEqual({ album: '', artist: '', triggeredAt: null });
 });
 
 test('unavailable and unknown states are failed reads, not empty records', async () => {
@@ -58,4 +62,23 @@ test('a request that never answers is abandoned after the timeout', async () => 
     init.signal?.addEventListener('abort', () => reject(new Error('aborted')));
   }), 20);
   await expect(ha.readHelpers()).rejects.toThrow();
+});
+
+test('reads when the tag automation last ran, so a second scan of the same record can be told apart', async () => {
+  const when = '2026-10-13T17:31:32.153655+00:00';
+  const { ha } = client((url) => (isAutomation(url) ? state('on', 200, { last_triggered: when }) : state('x')));
+  expect(await ha.readHelpers()).toEqual({ album: 'x', artist: 'x', triggeredAt: when });
+});
+
+test('an automation that is missing, unreadable or has never run gives a null time and the read still succeeds', async () => {
+  const handlers: Handler[] = [
+    (url) => (isAutomation(url) ? new Response('nope', { status: 404 }) : state('x')),
+    (url) => (isAutomation(url) ? state('on', 200, { last_triggered: null }) : state('x')),
+    (url) => (isAutomation(url) ? state('unavailable') : state('x')),
+    (url) => { if (isAutomation(url)) throw new Error('boom'); return state('x'); },
+  ];
+  for (const handler of handlers) {
+    const { ha } = client(handler);
+    expect(await ha.readHelpers()).toEqual({ album: 'x', artist: 'x', triggeredAt: null });
+  }
 });

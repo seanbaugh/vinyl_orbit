@@ -1,10 +1,10 @@
 import type { Db } from '../db/index.js';
 import { clearNowSpinning, getNowSpinning, logPlayIfNew, setNowSpinning } from '../repo/nowSpinning.js';
-import { matchRecord, type HaOverride, type HaPair } from './match.js';
+import { matchRecord, type HaOverride, type HaPair, type HaReading } from './match.js';
 
 export interface HaPollerDeps {
   db: Db;
-  read(): Promise<HaPair>;
+  read(): Promise<HaReading>;
   overrides(): HaOverride[];
   now(): Date;
   log: { info(message: string): void; warn(message: string): void };
@@ -16,18 +16,20 @@ export interface HaPoller {
   stop(): void;
 }
 
-const keyOf = (p: HaPair) => JSON.stringify([p.album.trim(), p.artist.trim()]);
+const keyOf = (p: HaPair, triggeredAt: string | null) => JSON.stringify([p.album.trim(), p.artist.trim(), triggeredAt]);
 const isEmpty = (p: HaPair) => !p.album.trim() && !p.artist.trim();
 
 /**
  * Turns what Home Assistant's helpers say into the server's now-spinning record. A pair is acted on only once the
  * same value has been read on two consecutive successful polls, so a read that straddles a tag change (album from
- * one tag, artist from the next) is never used. Home Assistant is only ever read.
+ * one tag, artist from the next) is never used. The time the tag automation last ran is part of that value, so scanning
+ * the record that is already showing (helpers unchanged) still counts as a tap. Home Assistant is only ever read.
  */
 export function createHaPoller(deps: HaPollerDeps): HaPoller {
   const { db, log } = deps;
   let candidate: string | null = null; // value seen on the previous successful tick
   let acted: string | undefined; // value the poller last acted on; undefined until the first confirmed read
+  let lastTriggered: string | null = null; // last known run time of the tag automation; a read that lacks it keeps this
   let failing = false;
   let timer: ReturnType<typeof setInterval> | null = null;
   let inFlight = false;
@@ -56,7 +58,9 @@ export function createHaPoller(deps: HaPollerDeps): HaPoller {
   async function tick(): Promise<void> {
     let pair: HaPair;
     try {
-      pair = await deps.read();
+      const reading = await deps.read();
+      pair = reading;
+      if (reading.triggeredAt) lastTriggered = reading.triggeredAt;
     } catch (err) {
       candidate = null;
       if (!failing) {
@@ -69,7 +73,7 @@ export function createHaPoller(deps: HaPollerDeps): HaPoller {
       failing = false;
       log.info('Home Assistant has recovered and is readable again');
     }
-    const key = keyOf(pair);
+    const key = keyOf(pair, lastTriggered);
     if (candidate !== key) {
       candidate = key;
       return;

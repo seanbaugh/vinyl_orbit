@@ -4,6 +4,8 @@ import type { Db } from '../db/index.js';
 import { albumSim, normalizeAlbum, normalizeArtist } from '../previews/normalize.js';
 
 export interface HaPair { album: string; artist: string }
+/** What one poll of Home Assistant reads: the helpers, plus when the tag automation last ran (null if unknown). */
+export interface HaReading extends HaPair { triggeredAt?: string | null }
 export interface HaOverride { album: string; artist: string; releaseId: number }
 
 /** Best candidate must reach this score... */

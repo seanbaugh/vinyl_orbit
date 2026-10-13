@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from 'vitest';
 import { openDb, type Db } from '../src/db/index.js';
-import type { HaOverride, HaPair } from '../src/homeassistant/match.js';
+import type { HaOverride, HaReading } from '../src/homeassistant/match.js';
 import { createHaPoller } from '../src/homeassistant/poller.js';
 import { getNowSpinning, setNowSpinning } from '../src/repo/nowSpinning.js';
 import { seedReleases } from './helpers.js';
@@ -26,7 +26,7 @@ beforeEach(() => {
 });
 
 /** A poller whose reads come from a script; each tick consumes the next entry. */
-function scripted(script: (HaPair | Error)[], overrides: HaOverride[] = []) {
+function scripted(script: (HaReading | Error)[], overrides: HaOverride[] = []) {
   let i = 0;
   const poller = createHaPoller({
     db,
@@ -196,5 +196,38 @@ describe('when Home Assistant cannot be read', () => {
   test('a poller that never reaches Home Assistant does not throw out of tick', async () => {
     const { poller } = scripted([down()]);
     await expect(poller.tick()).resolves.toBeUndefined();
+  });
+});
+
+describe('scanning the record that is already showing', () => {
+  const scan = (triggeredAt: string) => ({ ...RECKLESS, triggeredAt });
+
+  test('counts as a new tap even though the helper text did not change', async () => {
+    const { ticks } = scripted([scan('t1'), scan('t1'), scan('t2'), scan('t2')]);
+    await ticks(2);
+    expect(state()).toMatchObject({ releaseId: 7, tap: 0 }); // adopted at start, no tap
+    await ticks(2);
+    expect(state()).toMatchObject({ releaseId: 7, source: 'tag', tap: 1 });
+  });
+
+  test('the same last-run time on later ticks is not another tap', async () => {
+    const { ticks } = scripted([scan('t1'), scan('t1'), scan('t2'), scan('t2'), scan('t2'), scan('t2')]);
+    await ticks(6);
+    expect(state().tap).toBe(1);
+  });
+
+  test('a repeat scan within ten minutes does not log a second play', async () => {
+    const { ticks } = scripted([EMPTY, EMPTY, scan('t1'), scan('t1'), scan('t2'), scan('t2')]);
+    await ticks(4);
+    clock = new Date(T0.getTime() + 60_000);
+    await ticks(2);
+    expect(state().tap).toBe(2);
+    expect(plays(7)).toBe(1);
+  });
+
+  test('a time that is missing on some reads (automation unreadable) never causes a tap on its own', async () => {
+    const { ticks } = scripted([scan('t1'), scan('t1'), { ...RECKLESS, triggeredAt: null }, { ...RECKLESS, triggeredAt: null }]);
+    await ticks(4);
+    expect(state().tap).toBe(0); // adopted at start; a blip that loses the time is ignored, not a tap
   });
 });
