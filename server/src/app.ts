@@ -5,6 +5,7 @@ import { join, resolve } from 'node:path';
 import type { Db } from './db/index.js';
 import type { PreviewService } from './previews/service.js';
 import { HttpError } from './routes/common.js';
+import { coverRoutes } from './routes/cover.js';
 import { insightRoutes } from './routes/insights.js';
 import { nowSpinningRoutes } from './routes/nowSpinning.js';
 import { previewRoutes } from './routes/previews.js';
@@ -42,6 +43,7 @@ export function buildApp(deps: AppDeps): FastifyInstance {
   insightRoutes(app, deps);
   syncRoutes(app, deps);
   previewRoutes(app, deps);
+  coverRoutes(app, deps);
 
   const imagesDir = resolve(deps.dataDir, 'images');
   mkdirSync(imagesDir, { recursive: true });
