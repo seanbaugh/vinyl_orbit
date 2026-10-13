@@ -22,7 +22,7 @@ export function coverRoutes(app: FastifyInstance, { db, dataDir }: RouteDeps & {
 
     const row = db.prepare('SELECT local_path FROM images WHERE release_id = ? AND idx = 0').get(releaseId) as
       { local_path: string | null } | undefined;
-    const file = row?.local_path ? resolve(imagesDir, row.local_path) : null;
+    const file = row?.local_path ? resolve(dataDir, row.local_path) : null;
     if (!file || !file.startsWith(imagesDir + '/')) return notFound(reply);
     try {
       const bytes = await readFile(file);

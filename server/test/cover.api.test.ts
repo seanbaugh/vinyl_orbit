@@ -16,7 +16,7 @@ const cache = (releaseId: number) => {
   mkdirSync(join(dataDir, 'images', String(releaseId)), { recursive: true });
   writeFileSync(join(dataDir, 'images', String(releaseId), '0.jpg'), JPEG);
   db.prepare('INSERT INTO images (release_id, idx, type, remote_url, local_path) VALUES (?, 0, ?, ?, ?)')
-    .run(releaseId, 'primary', 'https://img.discogs.example/x.jpg', `${releaseId}/0.jpg`);
+    .run(releaseId, 'primary', 'https://img.discogs.example/x.jpg', `images/${releaseId}/0.jpg`);
 };
 
 beforeEach(async () => {
