@@ -29,3 +29,12 @@ test('azKey ignores leading articles and buckets non-letters', () => {
   expect(azKey(item('Ólafur Arnalds', 'x'), 'artist')).toBe('O');
   expect(azKey(item('x', 'x'), 'year')).toBe('');
 });
+
+test('a saved sort preference is the default and survives a round-trip', () => {
+  const pref = { sort: 'added', order: 'desc', view: 'list', size: 220 } as const;
+  expect(parseQuery(new URLSearchParams(''), pref)).toMatchObject(pref);
+  expect(parseQuery(new URLSearchParams('sort=artist&order=asc'), pref)).toMatchObject({ sort: 'artist', order: 'asc' });
+  const q = parseQuery(new URLSearchParams('sort=artist&order=asc'), pref);
+  expect(toSearchParams(q, pref).toString()).toBe('sort=artist&order=asc');
+  expect(toSearchParams(parseQuery(new URLSearchParams(''), pref), pref).toString()).toBe('');
+});

@@ -20,6 +20,13 @@ import { Stats } from './pages/Stats';
 
 export function App() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    try { return localStorage.getItem('vinyl-orbit:sidebar-collapsed') === '1'; } catch { return false; }
+  });
+  const toggleCollapsed = () => setCollapsed((c) => {
+    try { localStorage.setItem('vinyl-orbit:sidebar-collapsed', c ? '0' : '1'); } catch { /* best effort */ }
+    return !c;
+  });
   const [paletteOpen, setPaletteOpen] = useState(false);
   const location = useLocation();
   const contentRef = useRef<HTMLDivElement>(null);
@@ -44,11 +51,11 @@ export function App() {
   }, [location.pathname]);
 
   return (
-    <div className="app">
+    <div className={`app${collapsed ? ' sidebar-collapsed' : ''}`}>
       <VinylBackdrop />
       <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
       <div className="main">
-        <TopBar onMenu={() => setMenuOpen(true)} onSearch={() => setPaletteOpen(true)} />
+        <TopBar onMenu={() => setMenuOpen(true)} sidebarCollapsed={collapsed} onToggleSidebar={toggleCollapsed} onSearch={() => setPaletteOpen(true)} />
         <div className={`content${player.current ? ' with-player' : ''}`} ref={contentRef} id="content">
           <Routes>
             <Route path="/" element={<Dashboard />} />

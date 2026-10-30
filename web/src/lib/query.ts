@@ -19,8 +19,33 @@ const NUMBER_KEYS = ['decade', 'tag', 'crate'] as const;
 // Serialisation order: filters, then presentation.
 const ORDER = [...STRING_KEYS, ...NUMBER_KEYS, 'sort', 'order', 'view', 'size'] as const;
 
-export function parseQuery(sp: URLSearchParams): LibraryQuery {
-  const q: LibraryQuery = { ...DEFAULTS };
+export type DisplayPref = Pick<LibraryQuery, 'sort' | 'order' | 'view' | 'size'>;
+
+const PREF_KEY = 'vinyl-orbit:display';
+
+/** The sort, order, view and size the user last chose, which apply wherever a link doesn't name one. */
+export function loadPref(): DisplayPref {
+  try {
+    const v = JSON.parse(localStorage.getItem(PREF_KEY) ?? 'null');
+    if (v) {
+      const size = Number(v.size);
+      return {
+        sort: SORTS.some((s) => s.key === v.sort) ? v.sort : DEFAULTS.sort,
+        order: v.order === 'desc' ? 'desc' : 'asc',
+        view: v.view === 'list' || v.view === 'table' ? v.view : 'grid',
+        size: Number.isFinite(size) ? Math.min(280, Math.max(120, size)) : DEFAULTS.size,
+      };
+    }
+  } catch { /* storage unavailable or corrupt: fall back to the defaults */ }
+  return { ...DEFAULTS };
+}
+
+export function savePref(pref: DisplayPref): void {
+  try { localStorage.setItem(PREF_KEY, JSON.stringify(pref)); } catch { /* best effort */ }
+}
+
+export function parseQuery(sp: URLSearchParams, pref: DisplayPref = DEFAULTS): LibraryQuery {
+  const q: LibraryQuery = { ...DEFAULTS, ...pref };
   for (const k of STRING_KEYS) {
     const v = sp.get(k);
     if (v) q[k] = v;
@@ -31,7 +56,8 @@ export function parseQuery(sp: URLSearchParams): LibraryQuery {
   }
   const sort = sp.get('sort');
   if (SORTS.some((s) => s.key === sort)) q.sort = sort as SortKey;
-  if (sp.get('order') === 'desc') q.order = 'desc';
+  const order = sp.get('order');
+  if (order === 'asc' || order === 'desc') q.order = order;
   const view = sp.get('view');
   if (view === 'list' || view === 'table') q.view = view;
   const size = Number(sp.get('size'));
@@ -39,11 +65,12 @@ export function parseQuery(sp: URLSearchParams): LibraryQuery {
   return q;
 }
 
-export function toSearchParams(q: Partial<LibraryQuery>): URLSearchParams {
+export function toSearchParams(q: Partial<LibraryQuery>, pref: DisplayPref = DEFAULTS): URLSearchParams {
   const sp = new URLSearchParams();
+  const defaults: Record<string, unknown> = { ...DEFAULTS, ...pref };
   for (const k of ORDER) {
     const v = q[k];
-    if (v === undefined || v === '' || v === (DEFAULTS as Record<string, unknown>)[k]) continue;
+    if (v === undefined || v === '' || v === defaults[k]) continue;
     sp.set(k, String(v));
   }
   return sp;

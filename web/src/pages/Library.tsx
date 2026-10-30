@@ -9,15 +9,21 @@ import { CoverImage } from '../components/CoverImage';
 import { ActiveFilters, FilterBar } from '../components/FilterBar';
 import { fmtDate, fmtMoney } from '../lib/format';
 import { formatClass } from '../lib/formats';
-import { apiQuery, azKey, parseQuery, toSearchParams, type LibraryQuery } from '../lib/query';
+import { apiQuery, azKey, loadPref, parseQuery, savePref, toSearchParams, type LibraryQuery } from '../lib/query';
 
 export function Library() {
   const [sp, setSp] = useSearchParams();
-  const q = useMemo(() => parseQuery(sp), [sp]);
+  const q = useMemo(() => parseQuery(sp, loadPref()), [sp]);
   const { data: facets } = useFacets();
   const { data: items, isLoading, error } = useReleases(apiQuery(q));
 
-  const update = (patch: Partial<LibraryQuery>) => setSp(toSearchParams({ ...q, ...patch }), { replace: true });
+  const update = (patch: Partial<LibraryQuery>) => {
+    const next = { ...q, ...patch };
+    if (['sort', 'order', 'view', 'size'].some((k) => k in patch)) {
+      savePref({ sort: next.sort, order: next.order, view: next.view, size: next.size });
+    }
+    setSp(toSearchParams(next, loadPref()), { replace: true });
+  };
 
   const firstIds = useMemo(() => {
     const m = new Map<string, number>();

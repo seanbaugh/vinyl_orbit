@@ -353,7 +353,13 @@ table.data .num { text-align: right; font-variant-numeric: tabular-nums; }
 }
 
 /* ------------------------------------------------------------------ responsive */
+@media (min-width: 901px) {
+  .only-desktop { display: inline-flex; }
+  .app.sidebar-collapsed { --sidebar-w: 0px; }
+  .app.sidebar-collapsed .sidebar { display: none; }
+}
 @media (max-width: 900px) {
+  .only-desktop { display: none !important; }
   .sidebar {
     position: fixed; z-index: 80; top: 0; bottom: 0; left: 0; margin: 0; border-radius: 0; transform: translateX(-105%);
     transition: transform 0.2s; box-shadow: var(--shadow);

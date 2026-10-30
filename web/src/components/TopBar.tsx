@@ -1,11 +1,13 @@
-import { BarChart3, Menu, Moon, Palette, Search, Sun } from 'lucide-react';
+import { BarChart3, Menu, PanelLeftClose, PanelLeftOpen, Moon, Palette, Search, Sun } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SpinningNowButton } from './SpinningNowButton';
 import { SpinPicker } from './SpinPicker';
 import { ACCENTS, useTheme } from '../theme/ThemeProvider';
 
-export function TopBar({ onMenu, onSearch }: { onMenu: () => void; onSearch: () => void }) {
+export function TopBar({ onMenu, onSearch, sidebarCollapsed, onToggleSidebar }: {
+  onMenu: () => void; onSearch: () => void; sidebarCollapsed: boolean; onToggleSidebar: () => void;
+}) {
   const { theme, setTheme, accent, setAccent } = useTheme();
   const [pickerOpen, setPickerOpen] = useState(false);
   const pickerRef = useRef<HTMLDivElement>(null);
@@ -23,6 +25,10 @@ export function TopBar({ onMenu, onSearch }: { onMenu: () => void; onSearch: () 
   return (
     <header className="topbar">
       <button className="icon-btn only-mobile" onClick={onMenu} aria-label="Open menu"><Menu /></button>
+      <button className="icon-btn only-desktop" onClick={onToggleSidebar} aria-expanded={!sidebarCollapsed}
+        aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'} title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
+        {sidebarCollapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
+      </button>
       <button className="search-pill" onClick={onSearch}>
         <Search />
         <span className="ellipsis">Search records, artists, tracks, notes…</span>
