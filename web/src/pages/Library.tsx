@@ -1,5 +1,5 @@
 import { Library as LibraryIcon } from 'lucide-react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import type { ReleaseListItem, SortKey } from '@api/api-types';
 import { useFacets, useReleases } from '../api/hooks';
@@ -13,16 +13,24 @@ import { apiQuery, azKey, loadPref, parseQuery, savePref, toSearchParams, type L
 
 export function Library() {
   const [sp, setSp] = useSearchParams();
-  const q = useMemo(() => parseQuery(sp, loadPref()), [sp]);
+  // Held in state: the saved choice is omitted from the URL, so a change to it alone must still re-render.
+  const [pref, setPref] = useState(loadPref);
+  const q = useMemo(() => parseQuery(sp, pref), [sp, pref]);
   const { data: facets } = useFacets();
   const { data: items, isLoading, error } = useReleases(apiQuery(q));
 
   const update = (patch: Partial<LibraryQuery>) => {
     const next = { ...q, ...patch };
-    if (['sort', 'order', 'view', 'size'].some((k) => k in patch)) {
-      savePref({ sort: next.sort, order: next.order, view: next.view, size: next.size });
+    const keys = (['sort', 'order', 'view', 'size'] as const).filter((k) => k in patch);
+    if (keys.length) {
+      // Only what was just changed is saved, so a sort named by a link doesn't replace the saved one.
+      const saved = { ...pref, ...Object.fromEntries(keys.map((k) => [k, next[k]])) };
+      savePref(saved);
+      setPref(saved);
+      setSp(toSearchParams(next, saved), { replace: true });
+      return;
     }
-    setSp(toSearchParams(next, loadPref()), { replace: true });
+    setSp(toSearchParams(next, pref), { replace: true });
   };
 
   const firstIds = useMemo(() => {
