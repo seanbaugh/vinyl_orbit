@@ -73,3 +73,16 @@ test('the dedupe window is per release', () => {
   expect(logPlayIfNew(db, ID, T0)).not.toBeNull();
   expect(logPlayIfNew(db, other, at(1))).not.toBeNull();
 });
+
+test('a record stops spinning an hour after it was marked', () => {
+  setNowSpinning(db, ID, 'manual', T0);
+  expect(getNowSpinning(db, at(59)).releaseId).toBe(ID);
+  expect(getNowSpinning(db, at(60))).toMatchObject({ releaseId: null, source: null, updatedAt: null });
+});
+
+test('a fresh tap restarts the hour', () => {
+  setNowSpinning(db, ID, 'tag', T0, { tap: true });
+  setNowSpinning(db, ID, 'tag', at(50), { tap: true });
+  expect(getNowSpinning(db, at(100)).releaseId).toBe(ID);
+  expect(getNowSpinning(db, at(110)).releaseId).toBeNull();
+});

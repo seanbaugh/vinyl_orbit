@@ -7,6 +7,9 @@ export type { NowSpinningSource, NowSpinningState };
 /** A record logged by Spin now or a tag tap is not logged again inside this window. */
 export const PLAY_DEDUPE_MS = 600_000;
 
+/** A record marked as spinning stops showing as spinning this long after it was last marked or tapped. */
+export const SPIN_TTL_MS = 3_600_000;
+
 interface Row {
   release_id: number | null;
   source: NowSpinningSource | null;
@@ -17,7 +20,8 @@ interface Row {
 
 export function getNowSpinning(db: Db, now: Date): NowSpinningState {
   const row = db.prepare('SELECT release_id, source, updated_at, tap, tap_at FROM now_spinning WHERE id = 1').get() as Row;
-  const live = row.release_id !== null
+  const fresh = row.updated_at !== null && now.getTime() - new Date(row.updated_at).getTime() < SPIN_TTL_MS;
+  const live = row.release_id !== null && fresh
     && db.prepare('SELECT 1 FROM releases WHERE id = ? AND removed_at IS NULL').get(row.release_id) !== undefined;
   return {
     releaseId: live ? row.release_id : null,
